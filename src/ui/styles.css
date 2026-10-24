@@ -1,0 +1,173 @@
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --text: #1d2430;
+  --muted: #667085;
+  --border: #d9dee7;
+  --accent: #2f6fde;
+  --error: #b42318;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  color: var(--text);
+  background: var(--bg);
+}
+
+body {
+  margin: 0;
+}
+
+.app {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+h1 {
+  margin: 0 0 16px;
+  font-size: 24px;
+}
+h2 {
+  margin: 0;
+  font-size: 18px;
+}
+h3 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.muted {
+  color: var(--muted);
+  font-size: 13px;
+  margin: 4px 0 0;
+}
+
+.quick-add {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 20px;
+}
+.quick-add input:not([type='date']) {
+  flex: 1 1 240px;
+}
+.quick-add input,
+.quick-add select,
+.quick-add button {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+.quick-add button {
+  background: var(--accent);
+  color: white;
+  border-color: var(--accent);
+  cursor: pointer;
+}
+.quick-add button:disabled {
+  opacity: 0.6;
+}
+
+.form-error {
+  flex-basis: 100%;
+  color: var(--error);
+  margin: 4px 0 0;
+  font-size: 14px;
+}
+
+.empty,
+.goal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 16px;
+  margin-bottom: 16px;
+}
+
+.goal-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.gauge {
+  margin: 0;
+  width: 140px;
+  text-align: center;
+}
+.gauge svg {
+  width: 120px;
+}
+.gauge-track,
+.gauge-fill {
+  fill: none;
+  stroke-width: 10;
+  stroke-linecap: round;
+}
+.gauge-track {
+  stroke: var(--border);
+}
+.gauge-fill {
+  stroke: var(--accent);
+}
+.gauge-value {
+  font-size: 18px;
+  font-weight: 600;
+  fill: var(--text);
+}
+.gauge figcaption {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.project {
+  border-top: 1px solid var(--border);
+  margin-top: 12px;
+  padding-top: 12px;
+}
+.project-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+}
+
+.bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.bar-track {
+  width: 120px;
+  height: 8px;
+  background: var(--border);
+  border-radius: 4px;
+  overflow: hidden;
+}
+.bar-fill {
+  height: 100%;
+  background: var(--accent);
+}
+.bar-label {
+  font-size: 12px;
+  color: var(--muted);
+  min-width: 48px;
+}
+
+.tasks {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+}
+.tasks li {
+  display: flex;
+  justify-content: space-between;
+  padding: 4px 0;
+}
+.tasks li.done span:not(.muted) {
+  text-decoration: line-through;
+  color: var(--muted);
+}
