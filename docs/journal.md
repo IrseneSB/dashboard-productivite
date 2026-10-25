@@ -2,6 +2,21 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Publication
+
+- Owner approved: public repository, MIT license, GitHub noreply e-mail.
+- The e-mail appeared in every commit and in `package.json`. Nothing had been pushed yet, so the
+  local history was rewritten (`git filter-branch`) and checked: the only difference was the
+  e-mail line. The installer was rebuilt, because `package.json` is packaged inside the app.
+- Repository: https://github.com/IrseneSB/dashboard-productivite, tag `v0.1.0`.
+- **First CI run failed** on the formatter check for all 79 files: the Windows runner checks files
+  out with CRLF line endings and oxfmt expects LF. It passed locally because local files were LF.
+  Fix: `.gitattributes` with `* text=auto eol=lf`. Second run: 13 test files and 5 e2e
+  tests passed on GitHub. Lesson: CI is the first time the code runs on a machine that is not
+  the developer's; that is exactly why it exists.
+- Release v0.1.0 published with ProductivityDashboardSetup.exe; the uploaded size matches the
+  local file (155,053,056 bytes).
+
 ## 2026-10-25 — Milestone 6: packaging and release preparation
 
 - Makers limited to Windows (Squirrel installer + ZIP); Linux makers uninstalled. ADR-008.

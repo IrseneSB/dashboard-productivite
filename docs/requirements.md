@@ -118,14 +118,14 @@ Decision D4 applies: the app opens its normal window at login; no tray icon, no 
 
 ### Milestone 6 — packaging, installation, release preparation
 
-| Id     | Acceptance criterion                                                                     | Status (2026-10-25)                                                                                        |
-| ------ | ---------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
-| CA-6.1 | `npm run make` produces a Windows installer and a ZIP                                    | **Verified**: 147.9 MB Setup.exe and a ZIP produced                                                        |
-| CA-6.2 | Running the installer installs the app per user and opens its window                     | **Verified**: installed in `%LOCALAPPDATA%\productivity_dashboard`, window "Productivity Dashboard" opened |
-| CA-6.3 | In the installed app, "Open at Windows login" turns on, survives a reboot, and turns off | **Not verified yet**: needs the owner (it changes the owner's login items and needs a reboot)              |
-| CA-6.4 | The repository contains no database, export, secret or build output                      | **Verified** before each commit (`git diff --cached --name-only` check)                                    |
-| CA-6.5 | CI runs `verify` and the end-to-end tests on Windows for every push and pull request     | **Written** (`.github/workflows/ci.yml`); runs only once the repository is on GitHub                       |
-| CA-6.6 | The code is published on GitHub with a first release                                     | **Waiting for the owner's approval** (public repository)                                                   |
+| Id     | Acceptance criterion                                                                     | Status (2026-10-25)                                                                                                 |
+| ------ | ---------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------- |
+| CA-6.1 | `npm run make` produces a Windows installer and a ZIP                                    | **Verified**: 147.9 MB Setup.exe and a ZIP produced                                                                 |
+| CA-6.2 | Running the installer installs the app per user and opens its window                     | **Verified**: installed in `%LOCALAPPDATA%\productivity_dashboard`, window "Productivity Dashboard" opened          |
+| CA-6.3 | In the installed app, "Open at Windows login" turns on, survives a reboot, and turns off | **Not verified yet**: needs the owner (it changes the owner's login items and needs a reboot)                       |
+| CA-6.4 | The repository contains no database, export, secret or build output                      | **Verified** before each commit (`git diff --cached --name-only` check)                                             |
+| CA-6.5 | CI runs `verify` and the end-to-end tests on Windows for every push and pull request     | **Verified**: run 40173821522 passed on GitHub (13 test files, 5 e2e tests) after the line-ending fix               |
+| CA-6.6 | The code is published on GitHub with a first release                                     | **Verified**: public repository and release v0.1.0 with the installer (155 MB, size checked against the local file) |
 
 ### Later milestones
 
