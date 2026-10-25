@@ -58,6 +58,11 @@ export interface Task {
   id: Id;
   /** null = the task sits in the Inbox, outside any project. */
   projectId: Id | null;
+  /**
+   * null = a top-level task. Otherwise the task is a subtask of that task and
+   * always has the same projectId as its parent (one level only, ADR-005).
+   */
+  parentTaskId: Id | null;
   title: string;
   notes: string;
   priority: Priority;

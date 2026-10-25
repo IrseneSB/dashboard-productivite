@@ -162,7 +162,7 @@ h3 {
   padding: 0;
   margin: 8px 0 0;
 }
-.tasks li {
+.tasks li:not(.task) {
   display: flex;
   justify-content: space-between;
   padding: 4px 0;
@@ -170,4 +170,141 @@ h3 {
 .tasks li.done span:not(.muted) {
   text-decoration: line-through;
   color: var(--muted);
+}
+
+/* ---- milestone 2: actions, badges, subtasks, edit dialog ---- */
+
+.grow {
+  flex: 1;
+}
+.banner {
+  margin-bottom: 12px;
+}
+
+.actions {
+  display: inline-flex;
+  gap: 8px;
+  margin-left: auto;
+}
+button.link {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--accent);
+  font: inherit;
+  font-size: 13px;
+  cursor: pointer;
+}
+button.link.danger {
+  color: var(--error);
+}
+
+.badge {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--border);
+  color: var(--text);
+  margin-left: 6px;
+  vertical-align: middle;
+}
+.badge.success {
+  background: #d1fadf;
+}
+.badge.priority-high {
+  background: #fde2e1;
+}
+.badge.priority-low {
+  background: #eef2f6;
+  color: var(--muted);
+}
+
+.task-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+}
+.task-title {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+.tasks li.task {
+  display: block;
+}
+.status-done > .task-row .task-title span,
+.status-cancelled > .task-row .task-title span {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+.subtasks {
+  list-style: none;
+  margin: 2px 0 4px 26px;
+  padding: 0;
+}
+.inline-form {
+  display: flex;
+  gap: 6px;
+}
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(16, 24, 40, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.dialog {
+  background: var(--surface);
+  border-radius: 8px;
+  padding: 20px;
+  width: min(520px, 90vw);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.dialog label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 13px;
+  color: var(--muted);
+}
+.dialog input,
+.dialog textarea,
+.dialog select,
+.dialog button {
+  font: inherit;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+}
+.dialog-buttons {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.dialog button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.archived summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+
+/* Errors stay visible at the top of the window even after scrolling (code review, M2). */
+.banner {
+  position: sticky;
+  top: 8px;
+  z-index: 1;
+  background: #fef3f2;
+  border: 1px solid #fecdca;
+  border-radius: 6px;
+  padding: 8px 12px;
 }

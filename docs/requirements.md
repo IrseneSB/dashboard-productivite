@@ -22,13 +22,17 @@ before reaching long-term goals, by linking goals → projects → tasks. **Conf
 
 ## Assumptions (change any of them by asking)
 
-| #   | Assumption                                                                   | Why it is reasonable                                                         |
-| --- | ---------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| A1  | One level of subtasks in the MVP                                             | Recursion complicates the UI and progress; one level covers the quiz example |
-| A2  | "Blocked" is set manually in the MVP; real task dependencies come in Phase 2 | Dependencies need cycle detection and a dedicated UI                         |
-| A3  | JSON export is the only backup in the MVP                                    | Simple, inspectable, enough for one user                                     |
-| A4  | A project supports at most one goal                                          | Keeps progress unambiguous (a task is never counted twice)                   |
-| A5  | Goals and projects are archived, never hard-deleted, once they have children | Protects history and progress data                                           |
+| #   | Assumption                                                                                                        | Why it is reasonable                                                                                  |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
+| A1  | One level of subtasks in the MVP                                                                                  | Recursion complicates the UI and progress; one level covers the quiz example                          |
+| A2  | "Blocked" is set manually in the MVP; real task dependencies come in Phase 2                                      | Dependencies need cycle detection and a dedicated UI                                                  |
+| A3  | JSON export is the only backup in the MVP                                                                         | Simple, inspectable, enough for one user                                                              |
+| A4  | A project supports at most one goal                                                                               | Keeps progress unambiguous (a task is never counted twice)                                            |
+| A5  | Goals and projects are archived, never hard-deleted, once they have children                                      | Protects history and progress data                                                                    |
+| A6  | Goal and project progress count top-level tasks only; subtasks show their own "2 of 5" on the parent              | Keeps option A ("every task counts the same") without counting a parent and its parts twice (ADR-005) |
+| A7  | A parent task cannot be marked done while it has open subtasks                                                    | Prevents a "done" task whose work is visibly unfinished                                               |
+| A8  | No hard delete of tasks in the MVP: a task created by mistake is cancelled                                        | Cancelled tasks leave progress untouched; delete can come later with an undo                          |
+| A9  | "Postpone" moves the due date by 1 day or 1 week, starting from today when the task has no due date or is overdue | Two quick actions cover the common cases; any other date is set by editing                            |
 
 ## MVP features and acceptance criteria
 
@@ -45,9 +49,23 @@ Milestone numbers refer to the roadmap below. `CA-x.y` identifiers are used in t
 | CA-1.5 | Progress is unknown (not 0%) with no tasks; cancelled tasks do not count                                   | `tests/domain/progress.test.ts`                                          |
 | CA-1.6 | The SQLite store passes the same contract tests as the in-memory store                                     | `tests/data/sqlite-store.test.ts`                                        |
 
+### Milestone 2 — edit, archive, cancel, postpone, subtasks
+
+| Id      | Acceptance criterion                                                                                                                                     | Verified by                                     |
+| ------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------- |
+| CA-2.1  | A goal, a project or a task can be edited (title, description or notes, dates, priority); invalid values are refused with a message and nothing is saved | `use-cases.test.ts`, `edit-and-subtasks.e2e.ts` |
+| CA-2.2  | A goal or project can be archived: it leaves the dashboard, appears in the Archived section, and can be restored with its projects and tasks             | `use-cases.test.ts`, `edit-and-subtasks.e2e.ts` |
+| CA-2.3  | Nothing can be added under an archived goal or project                                                                                                   | `use-cases.test.ts`                             |
+| CA-2.4  | A task can be cancelled; it stays visible as cancelled and no longer counts in progress                                                                  | `use-cases.test.ts`, `edit-and-subtasks.e2e.ts` |
+| CA-2.5  | A task can be postponed by 1 day or 1 week; without a due date, the new date counts from today                                                           | `postpone.test.ts`, `use-cases.test.ts`         |
+| CA-2.6  | A task can have subtasks (one level); the parent shows "x of y subtasks done"; project progress counts the parent only                                   | `use-cases.test.ts`, `edit-and-subtasks.e2e.ts` |
+| CA-2.7  | A parent cannot be marked done while a subtask is open; a subtask cannot be added or reopened under a done parent                                        | `use-cases.test.ts`                             |
+| CA-2.8  | Moving a task to another project moves its subtasks with it, in one transaction                                                                          | `use-cases.test.ts`, `sqlite-store.test.ts`     |
+| CA-2.9  | A database created by milestone 1 is upgraded to the new schema without losing data                                                                      | `sqlite-store.test.ts` (migration 1 → 2)        |
+| CA-2.10 | Priority and due date can be set when creating a task and are shown in the task list                                                                     | `edit-and-subtasks.e2e.ts`                      |
+
 ### Later MVP milestones (criteria written when the milestone starts)
 
-- **M2** Edit, archive, cancel and postpone; subtasks (A1); priorities and due dates in the UI.
 - **M3** Dashboard sections: overdue, upcoming, blocked, recently completed.
 - **M4** "What should I work on now?" — rule-based suggestion with its reason shown.
 - **M5** Settings: start at login (D4); JSON export (A3).

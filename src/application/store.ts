@@ -12,10 +12,12 @@ import type { Goal, Id, Project, Task } from '../domain/model';
 
 export interface Store {
   insertGoal(goal: Goal): void;
+  updateGoal(goal: Goal): void;
   getGoal(id: Id): Goal | undefined;
   listGoals(): Goal[];
 
   insertProject(project: Project): void;
+  updateProject(project: Project): void;
   getProject(id: Id): Project | undefined;
   listProjects(): Project[];
 
@@ -23,4 +25,13 @@ export interface Store {
   updateTask(task: Task): void;
   getTask(id: Id): Task | undefined;
   listTasks(): Task[];
+  /** Direct subtasks of a task, oldest first. */
+  listSubtasks(parentTaskId: Id): Task[];
+
+  /**
+   * Runs `work` as one unit: if it throws, every write it made is undone.
+   * Used when one user action changes several rows (moving a task and its
+   * subtasks), so the data is never left half-updated.
+   */
+  transaction<T>(work: () => T): T;
 }

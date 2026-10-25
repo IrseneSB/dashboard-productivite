@@ -52,6 +52,7 @@ const project: Project = {
 const task: Task = {
   id: 't1',
   projectId: 'p1',
+  parentTaskId: null,
   title: 'Review the main concepts',
   notes: '',
   priority: 'high',
@@ -198,3 +199,139 @@ describe('migrations', () => {
     expect(() => migrate(db)).toThrow(/newer than this app supports/);
   });
 });
+
+describe.each([
+  ['memory', () => createMemoryStore()],
+  ['sqlite', () => createSqliteStore(open())],
+] as [string, () => Store][])(
+  'Store contract, milestone 2 (%s)',
+  (_name, makeStore) => {
+    it('updates goals and projects', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.updateGoal({ ...goal, title: 'Renamed', status: 'archived' });
+      store.updateProject({ ...project, goalId: null, status: 'completed' });
+      expect(store.getGoal('g1')).toMatchObject({
+        title: 'Renamed',
+        status: 'archived',
+      });
+      expect(store.getProject('p1')).toMatchObject({
+        goalId: null,
+        status: 'completed',
+      });
+    });
+
+    it('stores a subtask link', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.insertTask(task);
+      const sub = { ...task, id: 't2', parentTaskId: 't1' };
+      store.insertTask(sub);
+      expect(store.getTask('t2')).toEqual(sub);
+    });
+
+    it('undoes every write of a failed transaction (CA-2.8)', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.insertTask(task);
+      expect(() =>
+        store.transaction(() => {
+          store.updateTask({
+            ...task,
+            title: 'Changed inside the transaction',
+          });
+          throw new Error('simulated failure');
+        }),
+      ).toThrow('simulated failure');
+      expect(store.getTask('t1')?.title).toBe(task.title);
+    });
+
+    it('keeps the writes of a successful transaction', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.insertTask(task);
+      store.transaction(() =>
+        store.updateTask({ ...task, title: 'Committed' }),
+      );
+      expect(store.getTask('t1')?.title).toBe('Committed');
+    });
+  },
+);
+
+describe('migration 1 → 2 on an existing database (CA-2.9)', () => {
+  it('adds subtasks without losing milestone 1 data', () => {
+    const path = join(dir, 'v1.db');
+    // Build a database exactly as milestone 1 left it: migration 1 only.
+    const v1 = new DatabaseSync(path);
+    v1.exec('PRAGMA foreign_keys = ON');
+    migrate(v1, MIGRATIONS.slice(0, 1));
+    v1.exec(
+      `INSERT INTO goals VALUES ('g1', 'Old goal', '', '', NULL, 'active', '${at}', '${at}')`,
+    );
+    v1.exec(
+      `INSERT INTO tasks (id, project_id, title, notes, priority, due_date, status, completed_at, created_at, updated_at)
+       VALUES ('t1', NULL, 'Old task', '', 'medium', NULL, 'todo', NULL, '${at}', '${at}')`,
+    );
+    expect(currentVersion(v1)).toBe(1);
+    v1.close();
+
+    const upgraded = openDatabase(path);
+    openDbs.push(upgraded);
+    expect(currentVersion(upgraded)).toBe(2);
+    const store = createSqliteStore(upgraded);
+    expect(store.getGoal('g1')?.title).toBe('Old goal');
+    expect(store.getTask('t1')).toMatchObject({
+      title: 'Old task',
+      parentTaskId: null,
+    });
+  });
+
+  it('refuses a task that is its own parent', () => {
+    const store = createSqliteStore(open());
+    expect(() =>
+      store.insertTask({ ...task, projectId: null, parentTaskId: 't1' }),
+    ).toThrow(/CHECK|FOREIGN KEY/);
+  });
+});
+
+describe.each([
+  ['memory', () => createMemoryStore()],
+  ['sqlite', () => createSqliteStore(open())],
+] as [string, () => Store][])(
+  'Store contract, code review fixes (%s)',
+  (_name, makeStore) => {
+    it('lists only the direct subtasks of a task', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.insertTask(task);
+      store.insertTask({ ...task, id: 't2', parentTaskId: 't1' });
+      store.insertTask({ ...task, id: 't3', parentTaskId: null });
+      expect(store.listSubtasks('t1').map((t) => t.id)).toEqual(['t2']);
+      expect(store.listSubtasks('t3')).toEqual([]);
+    });
+
+    it('lets the outer transaction decide when transactions are nested', () => {
+      const store = makeStore();
+      store.insertGoal(goal);
+      store.insertProject(project);
+      store.insertTask(task);
+      store.transaction(() => {
+        try {
+          store.transaction(() => {
+            store.updateTask({ ...task, title: 'Inner write' });
+            throw new Error('inner failure');
+          });
+        } catch {
+          // The caller chooses to continue; the outer transaction commits.
+        }
+      });
+      // Both stores now agree: the inner write was kept by the outer commit.
+      expect(store.getTask('t1')?.title).toBe('Inner write');
+    });
+  },
+);

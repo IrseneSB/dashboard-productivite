@@ -18,6 +18,19 @@ export class ValidationError extends Error {
   }
 }
 
+/**
+ * Rejects a request whose input is not an object (e.g. null sent over IPC),
+ * so it gets a clear message instead of crashing on `input.title`.
+ */
+export function requireObject(input: unknown): void {
+  if (typeof input !== 'object' || input === null || Array.isArray(input)) {
+    throw new ValidationError(
+      'input',
+      'Invalid request: the form data is missing.',
+    );
+  }
+}
+
 export function validateTitle(raw: unknown, field = 'title'): string {
   if (typeof raw !== 'string') {
     throw new ValidationError(field, 'Title is required.');

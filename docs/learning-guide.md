@@ -3,7 +3,7 @@
 How this application was built, decision by decision. It describes the **actual** code in this
 repository and is updated at every milestone.
 
-**State of this guide:** written at the end of **milestone 1** (vertical slice). Chapters marked
+**State of this guide:** updated at the end of **milestone 2** (edit, archive, cancel, postpone, subtasks). Chapters marked
 _planned_ describe work that has not been done yet.
 
 ---
@@ -184,21 +184,22 @@ migration and checks that the database is left unchanged.
 
 ```
 src/
-  domain/          model.ts, validation.ts, task-status.ts, progress.ts
+  domain/          model.ts, validation.ts, task-status.ts, progress.ts, dates.ts
   application/     store.ts (interface), use-cases.ts
   data/            migrations.ts, sqlite-store.ts, memory-store.ts
   main/            main.ts (entry point), ipc.ts
   preload/         preload.ts
   shared/          api.ts (IPC contract)
-  ui/              main.tsx (entry), App.tsx, components/, styles.css, window.d.ts
+  ui/              main.tsx (entry), App.tsx, useAction.ts, projectOptions.ts, styles.css
+    components/    Gauge, QuickAddForm, TaskItem, EditDialog
 tests/
   domain/          pure rules
   application/     use cases with the in-memory store
   data/            the real SQLite store, constraints, migrations
-  e2e/             the packaged app driven by Playwright
+  e2e/             the packaged app driven by Playwright (helpers.ts shared)
 docs/
   requirements.md, learning-guide.md, journal.md, process-evaluation.md
-  decisions/       ADR-001 … ADR-004
+  decisions/       ADR-001 … ADR-005
 forge.config.mts   how Electron Forge builds and packages the app
 vite.*.config.mts  one bundler configuration per process (main, preload, renderer)
 vitest*.config.mts unit/integration tests, and end-to-end tests
@@ -251,6 +252,51 @@ can use a fixed time.
 
 **How to extend safely:** add the transition to `ALLOWED`, add a test in
 `tests/domain/task-status.test.ts`, and run `npm run verify`.
+
+### Milestone 2: edit, archive, cancel, postpone, subtasks
+
+**Requirements:** CA-2.1 to CA-2.10 in `requirements.md`.
+
+**Order of work:** criteria and assumptions first (A6–A9), then the schema change (migration 2),
+then the store, the use cases and their tests, and only then the UI and the end-to-end test.
+
+**Design decision — subtasks** ([ADR-005](decisions/ADR-005-subtasks.md)): a nullable
+`parent_task_id` column instead of a new table. Rules that involve two rows ("one level only",
+"same project as the parent") cannot be SQL `CHECK` constraints, so they live in the use cases.
+
+**Key code — moving a task with its subtasks** (`updateTask` in `src/application/use-cases.ts`):
+
+```ts
+return store.transaction(() => {
+  const moved = { ...updated, projectId };
+  store.updateTask(moved);
+  for (const subtask of subtasksOf(task.id)) {
+    store.updateTask({ ...subtask, projectId, updatedAt: at });
+  }
+  return moved;
+});
+```
+
+Several rows change for one user action. Without a transaction, a failure halfway would leave
+the parent in one project and some subtasks in another. `store.transaction` makes the whole
+block succeed or fail as one unit (`BEGIN` / `COMMIT` / `ROLLBACK` in SQLite, a snapshot in the
+in-memory store). A contract test checks that both stores undo every write when the block throws.
+
+**Key code — partial updates.** `UpdateTaskInput` is `Partial<…>`: a field that is `undefined`
+is left unchanged, `null` clears an optional date. Every given field is validated **before**
+`store.updateTask` runs, so an invalid due date never saves a half-edited task (CA-2.1).
+
+**Key code — one IPC loop.** `registerIpcHandlers` (`src/main/ipc.ts`) now registers every
+channel in `CHANNELS` with a loop, because each API function has a use case of the same name.
+Adding a feature means: write the use case, add it to `DashboardApi` and `CHANNELS`; TypeScript
+refuses a channel without a matching API function (`satisfies Record<keyof DashboardApi, string>`).
+
+**UI pattern — `useAction`.** Every button follows the same steps: call the main process, show
+the refusal message or reload the dashboard. `createRunAction` writes this once, and React
+context gives it to nested components (`TaskItem`) without passing callbacks through every level.
+
+**How to extend safely:** a new task action = a use case + its tests, an entry in `DashboardApi`
+and `CHANNELS`, a button calling `run(() => window.api.…)`, and a step in an e2e test.
 
 ---
 
@@ -329,6 +375,49 @@ becomes noticeable.
 | ----------------------------------------------------------------------- | ------------------------------- |
 | `npm run verify` (typecheck, lint, format, 47 unit + integration tests) | Passed                          |
 | `npm run test:e2e` (package + 1 end-to-end test including a restart)    | Passed after the test fix above |
+
+### Two real events in milestone 2
+
+**1. A test broke because the UI changed, not because the app did.** After adding buttons
+labelled "Edit Review the main concepts", "Cancel Review the main concepts"…, the milestone 1
+end-to-end test failed:
+
+```
+strict mode violation: getByLabel('Review the main concepts') resolved to 6 elements
+```
+
+`getByLabel` matches labels that _contain_ the text, so the checkbox and five new buttons all
+matched. The fix targets the element by its **role**:
+`getByRole('checkbox', { name: 'Review the main concepts' })`. Lesson: end-to-end tests should
+select elements the way a user identifies them (a checkbox named X), not by a text fragment that
+other controls may share.
+
+**2. An independent code review found 10 issues after all tests passed.** A separate review
+pass read the milestone 2 diff with fresh eyes. 9 of its 10 findings were fixed:
+
+| Finding                                                                                       | Why the tests had not caught it                                       | Fix                                                      |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------- | -------------------------------------------------------- |
+| Cancelling a parent also cancels its subtasks, in one click, and Reopen does not restore them | The behavior was intended and tested; the _risk for the user_ was not | Confirmation before cancelling a task with open subtasks |
+| Errors appear at the top of the page, possibly off-screen                                     | Tests read the alert wherever it is                                   | The error banner sticks to the top of the window         |
+| The test-only `DASHBOARD_USER_DATA` override also worked in the installed app                 | Tests only run the unpackaged app                                     | Ignored when `app.isPackaged`                            |
+| A malformed request (`input` = null) crashed with a generic error                             | The UI always sends objects                                           | `requireObject(input)` in every create/update use case   |
+| Nested transactions behaved differently in the two stores                                     | No code nests them yet                                                | Same rule in both stores + a contract test               |
+| Loading all tasks to find one task's subtasks                                                 | Correct, just wasteful                                                | `Store.listSubtasks` using the index                     |
+| Duplicated project-picker list; duplicated e2e helpers; an object copy used to test a status  | Not bugs                                                              | Shared helpers                                           |
+
+The skipped finding (the preload's type cast) was kept on purpose: the channel names are still
+checked by TypeScript, and the generic forwarding is what keeps the preload one screen long.
+
+**Lesson:** passing tests prove the behavior that was specified. A reviewer asks a different
+question — _what could go wrong for the user?_ — and finds risks the specification missed.
+
+### Results recorded for milestone 2 (2026-10-25)
+
+| Check                                                                       | Result                                                                  |
+| --------------------------------------------------------------------------- | ----------------------------------------------------------------------- |
+| `npm run verify` (typecheck, lint, format, **89** unit + integration tests) | Passed                                                                  |
+| `npm run test:e2e` (package + 2 end-to-end tests)                           | Passed after the selector fix above                                     |
+| Confirmation dialog when cancelling a parent with open subtasks             | **Not covered by an automated test** (checked by reading the code only) |
 
 ---
 

@@ -1,10 +1,12 @@
-// One small form for the vertical slice: create a goal, a project or a task.
-// The UI checks nothing itself beyond "required": the main process validates
-// every input and the form shows the message it returns.
+// Quick creation of a goal, a project or a task. The UI checks nothing itself
+// beyond "required": the main process validates every input and the form
+// shows the message it returns.
 
 import { useState, type FormEvent } from 'react';
 import type { DashboardView } from '../../application/use-cases';
+import { PRIORITIES } from '../../domain/model';
 import type { Result } from '../../shared/api';
+import { projectOptions } from '../projectOptions';
 
 type Kind = 'goal' | 'project' | 'task';
 
@@ -18,18 +20,11 @@ export function QuickAddForm({ dashboard, onCreated }: Props) {
   const [title, setTitle] = useState('');
   const [parentId, setParentId] = useState('');
   const [dueDate, setDueDate] = useState('');
+  const [priority, setPriority] = useState('medium');
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const projects = [
-    ...dashboard.goals.flatMap((g) =>
-      g.projects.map((p) => ({ ...p.project, goalTitle: g.goal.title })),
-    ),
-    ...dashboard.standaloneProjects.map((p) => ({
-      ...p.project,
-      goalTitle: null,
-    })),
-  ];
+  const projects = projectOptions(dashboard);
 
   async function submit(event: FormEvent) {
     event.preventDefault();
@@ -48,6 +43,7 @@ export function QuickAddForm({ dashboard, onCreated }: Props) {
         title,
         projectId: parentId || null,
         dueDate: dueDate || null,
+        priority,
       });
     }
     setSaving(false);
@@ -57,6 +53,7 @@ export function QuickAddForm({ dashboard, onCreated }: Props) {
     }
     setTitle('');
     setDueDate('');
+    setPriority('medium');
     onCreated();
   }
 
@@ -113,7 +110,18 @@ export function QuickAddForm({ dashboard, onCreated }: Props) {
             <option value="">Inbox (no project)</option>
             {projects.map((p) => (
               <option key={p.id} value={p.id}>
-                {p.goalTitle ? `${p.goalTitle} › ${p.title}` : p.title}
+                {p.label}
+              </option>
+            ))}
+          </select>
+          <select
+            aria-label="Priority"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+          >
+            {PRIORITIES.map((p) => (
+              <option key={p} value={p}>
+                {p} priority
               </option>
             ))}
           </select>

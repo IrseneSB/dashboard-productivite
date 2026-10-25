@@ -2,6 +2,19 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Milestone 2: edit, archive, cancel, postpone, subtasks
+
+- Criteria CA-2.1 to CA-2.10 and assumptions A6–A9 written before coding. A9 was widened during
+  implementation: an overdue task is postponed from today, not from its past due date.
+- Migration 2 adds `tasks.parent_task_id`; a test upgrades a real milestone 1 database (CA-2.9).
+- `Store` gained `updateGoal`, `updateProject`, `listSubtasks` and `transaction`; ADR-005 written.
+- IPC handlers and the preload now loop over `CHANNELS` instead of listing each function.
+- The milestone 1 e2e test failed after new buttons were added (ambiguous `getByLabel`); fixed by
+  selecting the checkbox by role. The milestone 2 e2e test passed on its first run.
+- Independent code review: 10 findings, 9 fixed, 1 kept on purpose (see learning guide, ch. 8).
+- Results: `npm run verify` passed (89 tests); `npm run test:e2e` passed (2 tests).
+- Not covered by automated tests: the confirmation dialog shown before cancelling a parent task.
+
 ## 2026-10-25 — Milestone 1: vertical slice
 
 - Scaffolded with `create-electron-app` 8.0.1 (template `vite` + TypeScript). The documented

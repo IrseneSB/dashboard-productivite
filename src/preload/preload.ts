@@ -6,13 +6,13 @@
 import { contextBridge, ipcRenderer } from 'electron';
 import { CHANNELS, type DashboardApi } from '../shared/api';
 
-const api: DashboardApi = {
-  getDashboard: () => ipcRenderer.invoke(CHANNELS.getDashboard),
-  createGoal: (input) => ipcRenderer.invoke(CHANNELS.createGoal, input),
-  createProject: (input) => ipcRenderer.invoke(CHANNELS.createProject, input),
-  createTask: (input) => ipcRenderer.invoke(CHANNELS.createTask, input),
-  setTaskStatus: (taskId, status) =>
-    ipcRenderer.invoke(CHANNELS.setTaskStatus, taskId, status),
-};
+// One forwarding function per channel. Only these channels can be reached
+// from the UI, whatever code runs there.
+const api = Object.fromEntries(
+  Object.entries(CHANNELS).map(([name, channel]) => [
+    name,
+    (...args: unknown[]) => ipcRenderer.invoke(channel, ...args),
+  ]),
+) as unknown as DashboardApi;
 
 contextBridge.exposeInMainWorld('api', api);

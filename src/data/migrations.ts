@@ -62,6 +62,19 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX tasks_project_id ON tasks(project_id);
     `,
   },
+  {
+    version: 2,
+    description: 'subtasks (one level, see ADR-005)',
+    // ADD COLUMN keeps every existing row; old tasks simply get NULL (top-level).
+    // "One level only" and "same project as the parent" involve other rows, which
+    // a CHECK constraint cannot see: the use cases enforce them.
+    sql: `
+      ALTER TABLE tasks ADD COLUMN parent_task_id TEXT
+        REFERENCES tasks(id) ON DELETE RESTRICT
+        CHECK (parent_task_id IS NULL OR parent_task_id <> id);
+      CREATE INDEX tasks_parent_task_id ON tasks(parent_task_id);
+    `,
+  },
 ];
 
 export function currentVersion(db: DatabaseSync): number {

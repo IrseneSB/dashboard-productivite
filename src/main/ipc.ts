@@ -32,19 +32,14 @@ function toResult<T>(run: () => T): Result<T> {
 }
 
 export function registerIpcHandlers(useCases: UseCases): void {
-  ipcMain.handle(CHANNELS.getDashboard, () =>
-    toResult(() => useCases.getDashboard()),
-  );
-  ipcMain.handle(CHANNELS.createGoal, (_event, input) =>
-    toResult(() => useCases.createGoal(input)),
-  );
-  ipcMain.handle(CHANNELS.createProject, (_event, input) =>
-    toResult(() => useCases.createProject(input)),
-  );
-  ipcMain.handle(CHANNELS.createTask, (_event, input) =>
-    toResult(() => useCases.createTask(input)),
-  );
-  ipcMain.handle(CHANNELS.setTaskStatus, (_event, taskId, status) =>
-    toResult(() => useCases.setTaskStatus(taskId, status)),
-  );
+  // Every API function has a use case with the same name and arguments, so one
+  // loop registers them all; adding a use case to DashboardApi and CHANNELS is
+  // enough to expose it. Arguments arrive from the renderer untyped: the use
+  // cases validate them before use.
+  for (const name of Object.keys(CHANNELS) as (keyof typeof CHANNELS)[]) {
+    const useCase = useCases[name] as (...args: unknown[]) => unknown;
+    ipcMain.handle(CHANNELS[name], (_event, ...args: unknown[]) =>
+      toResult(() => useCase(...args)),
+    );
+  }
 }

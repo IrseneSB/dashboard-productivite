@@ -4,9 +4,10 @@ A local-first Windows desktop app that connects **long-term goals â†’ projects â
 progress with a gauge, and (soon) suggests what to work on next. Your data stays on your computer
 in a SQLite file.
 
-> **Status: milestone 1 of 6 (vertical slice).** You can create goals, projects and tasks, mark
-> tasks done and see progress. Editing, the "work on next" suggestion, start at login and an
-> installer are not built yet. See [the roadmap](docs/requirements.md#later-mvp-milestones-criteria-written-when-the-milestone-starts).
+> **Status: milestone 2 of 6.** You can create, edit, archive and restore goals and projects;
+> create, edit, postpone, cancel and complete tasks with one level of subtasks; and see progress.
+> The overdue/upcoming sections, the "work on next" suggestion, start at login and an installer
+> are not built yet. See [the roadmap](docs/requirements.md#later-mvp-milestones-criteria-written-when-the-milestone-starts).
 
 ## Requirements
 

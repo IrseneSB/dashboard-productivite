@@ -153,4 +153,4 @@ out/
 exports/
 
 # Screenshot written by the end-to-end test
-tests/e2e/last-run.png
+tests/e2e/last-run*.png

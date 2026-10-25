@@ -21,7 +21,21 @@ did well and badly, based on observable results.
 - A slow network made the setup take much longer than the coding; the process had to work around
   it rather than wait.
 
-## To evaluate in later milestones
+## Milestone 2
 
-- Whether an independent reviewer finds issues the main session missed (planned at the end of M2).
-- Whether requirements stay traced as features are added.
+| Aspect                   | Observation                                                                                                                                                     | Evidence                        |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------- |
+| Assumptions              | 4 new assumptions (A6–A9) written before coding; one (A9) was widened during coding and the document was updated, not silently changed                          | `requirements.md`, `journal.md` |
+| Regression detection     | The milestone 1 e2e test caught a change in the UI the same day                                                                                                 | Learning guide, ch. 8           |
+| **Independent reviewer** | All 89 + 2 tests were green, yet a separate review pass found 10 issues; 9 were worth fixing, 1 was a high-risk user-facing behavior (one-click cascade cancel) | Learning guide, ch. 8           |
+| Traceability             | Every CA-2.x criterion names the test that checks it                                                                                                            | `requirements.md`               |
+| Honest reporting         | One behavior (confirmation dialog) is marked as not covered by tests                                                                                            | `journal.md`                    |
+
+**What this says about the agent system:** the reviewer earned its place. Tests verify what was
+specified; the reviewer questioned what was _not_ specified (user risk, production-only
+behavior, malformed input). The cost was one review pass per milestone, not per change.
+
+## Still to evaluate
+
+- Whether requirements stay traced as features are added (M3–M6).
+- Whether the owner confirms or rejects assumptions A1–A9.

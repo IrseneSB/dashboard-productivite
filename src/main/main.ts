@@ -16,7 +16,9 @@ if (started) {
 
 // End-to-end tests point the app at a throwaway data folder so they never
 // read or modify the real database. Must run before anything uses userData.
-if (process.env.DASHBOARD_USER_DATA) {
+// Ignored in the installed app: a stray environment variable must never make
+// a user's real data look lost.
+if (!app.isPackaged && process.env.DASHBOARD_USER_DATA) {
   app.setPath('userData', process.env.DASHBOARD_USER_DATA);
 }
 

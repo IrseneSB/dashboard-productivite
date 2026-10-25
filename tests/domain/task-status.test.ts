@@ -6,6 +6,7 @@ import { ValidationError } from '../../src/domain/validation';
 const base: Task = {
   id: 't1',
   projectId: null,
+  parentTaskId: null,
   title: 'Review the main concepts',
   notes: '',
   priority: 'medium',

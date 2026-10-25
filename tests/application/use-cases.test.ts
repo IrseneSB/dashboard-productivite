@@ -31,7 +31,7 @@ describe('vertical slice: goal -> project -> task -> dashboard', () => {
     let view = useCases.getDashboard().goals[0];
     expect(view.goal.title).toBe('Prepare successfully for the semester');
     expect(view.progress).toEqual({ done: 0, total: 1, ratio: 0 });
-    expect(view.projects[0].tasks.map((t) => t.title)).toEqual([
+    expect(view.projects[0].tasks.map((t) => t.task.title)).toEqual([
       'Review the main concepts',
     ]);
 
@@ -73,7 +73,7 @@ describe('vertical slice: goal -> project -> task -> dashboard', () => {
 
   it('puts tasks without a project in the Inbox', () => {
     useCases.createTask({ title: 'Buy a notebook' });
-    expect(useCases.getDashboard().inbox.map((t) => t.title)).toEqual([
+    expect(useCases.getDashboard().inbox.map((t) => t.task.title)).toEqual([
       'Buy a notebook',
     ]);
   });
