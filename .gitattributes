@@ -1,0 +1,9 @@
+# Store and check out text files with LF line endings on every machine,
+# whatever its core.autocrlf setting. Without this, Windows checkouts (including
+# the GitHub Actions Windows runner) get CRLF and the formatter check fails.
+* text=auto eol=lf
+
+# Binary files: never touch their bytes.
+*.png binary
+*.ico binary
+*.exe binary
