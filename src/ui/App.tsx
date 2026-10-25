@@ -13,6 +13,7 @@ import { EditDialog, type Editing } from './components/EditDialog';
 import { Gauge, ProgressBar } from './components/Gauge';
 import { QuickAddForm } from './components/QuickAddForm';
 import { FocusPanel } from './components/FocusPanel';
+import { NextTaskCard } from './components/NextTaskCard';
 import { TaskItem } from './components/TaskItem';
 import { ActionContext, createRunAction, useRunAction } from './useAction';
 
@@ -90,6 +91,7 @@ export function App() {
           </p>
         )}
 
+        {!isEmpty && <NextTaskCard next={dashboard.next} />}
         {!isEmpty && <FocusPanel focus={dashboard.focus} onEdit={editTask} />}
 
         {isEmpty && (

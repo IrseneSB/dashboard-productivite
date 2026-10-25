@@ -22,6 +22,7 @@ import {
   type FocusItem,
   type FocusSections,
 } from '../domain/focus';
+import { computeNextTask, type NextTask } from '../domain/next-task';
 import { computeProgress, type Progress } from '../domain/progress';
 import { isOpen, isOpenStatus, transitionTask } from '../domain/task-status';
 import {
@@ -114,6 +115,8 @@ export interface DashboardView {
   archived: { goals: Goal[]; projects: Project[] };
   /** Overdue, upcoming, blocked and recently completed work (milestone 3). */
   focus: FocusSections;
+  /** "What should I work on now?" (milestone 4). */
+  next: NextTask;
 }
 
 export function createUseCases({ store, now, newId }: Dependencies) {
@@ -564,31 +567,52 @@ export function createUseCases({ store, now, newId }: Dependencies) {
     // Focus sections only see what the dashboard shows: anything inside an
     // archived goal or project is left out (assumption A11).
     const focusItems: FocusItem[] = [];
-    const collect = (views: TaskView[], context: string[]) => {
+    // Work left in a project marked completed (or a goal marked achieved) is
+    // still shown in Focus, but never suggested: the user declared it finished
+    // (code review, M4).
+    const finishedTaskIds = new Set<Id>();
+    const collect = (
+      views: TaskView[],
+      context: string[],
+      finished = false,
+    ) => {
       for (const view of views) {
-        focusItems.push({ task: view.task, context });
-        for (const subtask of view.subtasks) {
+        const tasks = [view.task, ...view.subtasks];
+        for (const task of tasks) {
+          const isSub = task !== view.task;
           focusItems.push({
-            task: subtask,
-            context: [...context, view.task.title],
+            task,
+            context: isSub ? [...context, view.task.title] : context,
           });
+          if (finished) finishedTaskIds.add(task.id);
         }
       }
     };
     for (const { goal, projects } of goals) {
-      for (const view of projects)
-        collect(view.tasks, [goal.title, view.project.title]);
+      for (const view of projects) {
+        const finished =
+          goal.status === 'achieved' || view.project.status === 'completed';
+        collect(view.tasks, [goal.title, view.project.title], finished);
+      }
     }
     for (const view of standaloneProjects)
-      collect(view.tasks, [view.project.title]);
+      collect(
+        view.tasks,
+        [view.project.title],
+        view.project.status === 'completed',
+      );
     collect(inbox, []);
-    const current = now();
+    const today = localIsoDate(now());
 
     return {
       goals,
       standaloneProjects,
       inbox,
-      focus: computeFocus(focusItems, localIsoDate(current)),
+      focus: computeFocus(focusItems, today),
+      next: computeNextTask(
+        focusItems.filter((i) => !finishedTaskIds.has(i.task.id)),
+        today,
+      ),
       archived: {
         goals: allGoals.filter((g) => g.status === 'archived'),
         projects: allProjects.filter((p) => p.status === 'archived'),

@@ -102,3 +102,32 @@ describe('CA-3.3 status from the edit form (code review, M3)', () => {
     );
   });
 });
+
+describe('milestone 4: suggestion in the dashboard', () => {
+  it('only suggests visible work (CA-4.3)', () => {
+    const { goal, task } = semester();
+    app.updateTask(task.id, { priority: 'high' });
+    app.createTask({ title: 'Inbox task' });
+    expect(app.getDashboard().next.suggestion?.item.task.title).toBe(
+      'Practice questions',
+    );
+
+    app.setGoalStatus(goal.id, 'archived');
+    expect(app.getDashboard().next.suggestion?.item.task.title).toBe(
+      'Inbox task',
+    );
+  });
+});
+
+describe('code review fixes (M4)', () => {
+  it('does not suggest work from a completed project, but still shows it in Focus', () => {
+    const { project, task } = semester();
+    app.updateTask(task.id, { dueDate: '2026-10-20' });
+    app.setProjectStatus(project.id, 'completed');
+    const dashboard = app.getDashboard();
+    expect(dashboard.next.suggestion).toBeNull();
+    expect(dashboard.focus.overdue.map((o) => o.task.title)).toEqual([
+      'Practice questions',
+    ]);
+  });
+});

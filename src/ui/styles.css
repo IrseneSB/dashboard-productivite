@@ -352,3 +352,52 @@ button.link.danger {
 .task-title {
   min-width: 0;
 }
+
+/* ---- milestone 4: "what should I work on now?" ---- */
+
+.next-task {
+  background: var(--surface);
+  border: 2px solid var(--accent);
+  border-radius: 8px;
+  padding: 14px 16px;
+  margin-bottom: 16px;
+}
+.next-task h2 {
+  font-size: 15px;
+  margin-bottom: 8px;
+}
+.next-task h3 {
+  font-size: 13px;
+  color: var(--muted);
+  margin: 10px 0 4px;
+}
+.next-task ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.suggestion.main .suggestion-title {
+  font-size: 17px;
+  font-weight: 600;
+}
+.next-actions {
+  display: flex;
+  gap: 8px;
+  margin: 8px 0;
+}
+.next-actions button {
+  font: inherit;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.next-actions button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.rule-note {
+  font-size: 12px;
+}

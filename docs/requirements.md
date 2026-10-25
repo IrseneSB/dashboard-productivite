@@ -82,9 +82,29 @@ Milestone numbers refer to the roadmap below. `CA-x.y` identifiers are used in t
 | CA-3.6 | Done, cancelled and archived work never appears in Overdue, Upcoming or Blocked                              | `focus.test.ts`, `milestone-3.test.ts` |
 | CA-3.7 | An empty section says so in one line instead of disappearing                                                 | `focus.e2e.ts`                         |
 
+### Milestone 4 — "What should I work on now?"
+
+Rules (ADR-006), applied in this order, each one only breaking ties of the previous:
+
+1. Candidates: open tasks that are not blocked, in visible goals and projects. A task with open
+   subtasks is not a candidate itself: its subtasks are (they are the actionable steps).
+2. Overdue first, the most days late first.
+3. Then tasks due within 3 days, the soonest first.
+4. Then priority: high, medium, low.
+5. Then the earliest due date (tasks without a date come last).
+6. Then the oldest task (created first), then the title, so the result never changes between reloads.
+
+| Id     | Acceptance criterion                                                                                                      | Verified by                             |
+| ------ | ------------------------------------------------------------------------------------------------------------------------- | --------------------------------------- |
+| CA-4.1 | The dashboard shows one suggested task with the reasons it was chosen, in plain words ("2 days overdue", "high priority") | `next-task.test.ts`, `next-task.e2e.ts` |
+| CA-4.2 | The rules above decide the order; each rule has a test where it is the deciding one                                       | `next-task.test.ts`                     |
+| CA-4.3 | Blocked, done, cancelled and archived tasks are never suggested; a parent with open subtasks is replaced by its subtasks  | `next-task.test.ts`                     |
+| CA-4.4 | Two alternatives are listed under the suggestion                                                                          | `next-task.test.ts`, `next-task.e2e.ts` |
+| CA-4.5 | From the suggestion, the task can be started (in progress) or marked done; the suggestion then updates                    | `next-task.e2e.ts`                      |
+| CA-4.6 | With nothing to suggest, the card says why in one line                                                                    | `next-task.test.ts`, `next-task.e2e.ts` |
+
 ### Later MVP milestones (criteria written when the milestone starts)
 
-- **M4** "What should I work on now?" — rule-based suggestion with its reason shown.
 - **M5** Settings: start at login (D4); JSON export (A3).
 - **M6** Packaging (Windows installer), install and startup verification, GitHub publication.
 

@@ -2,6 +2,20 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Milestone 4: "What should I work on now?"
+
+- Owner asked to chain milestones without waiting for confirmation (publication still needs approval).
+- Rules written in `requirements.md` before coding; ADR-006 explains why ordered rules beat a
+  weighted score for explainability.
+- `computeNextTask` returns a suggestion, the reasons that apply, and two alternatives; one test per
+  rule shows that rule deciding.
+- Wording fix during development: "already started" was shown as a reason although no rule uses
+  it; removed, so the card never claims a reason that did not decide anything.
+- Code review: 4 findings, all fixed — tasks from completed projects were still suggested, the
+  rule explanation was a hand-written copy, double click on "Mark done" could complete the next
+  suggestion, a test fixture's timestamps wrapped after 60 items.
+- Results: `npm run verify` passed (116 tests); `npm run test:e2e` passed (4 tests).
+
 ## 2026-10-25 — Milestone 3: focus sections
 
 - Owner confirmed A6–A9; new assumptions A10–A12 (7-day windows, subtasks included, due today = upcoming).

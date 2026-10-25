@@ -3,7 +3,7 @@
 How this application was built, decision by decision. It describes the **actual** code in this
 repository and is updated at every milestone.
 
-**State of this guide:** updated at the end of **milestone 3** (focus sections). Chapters marked
+**State of this guide:** updated at the end of **milestone 4** ("what should I work on now?"). Chapters marked
 _planned_ describe work that has not been done yet.
 
 ---
@@ -199,7 +199,7 @@ tests/
   e2e/             the packaged app driven by Playwright (helpers.ts shared)
 docs/
   requirements.md, learning-guide.md, journal.md, process-evaluation.md
-  decisions/       ADR-001 … ADR-005
+  decisions/       ADR-001 … ADR-006
 forge.config.mts   how Electron Forge builds and packages the app
 vite.*.config.mts  one bundler configuration per process (main, preload, renderer)
 vitest*.config.mts unit/integration tests, and end-to-end tests
@@ -326,6 +326,35 @@ from the Focus panel by construction, not by a second filter that could drift fr
 **Time in a long-running app.** The dashboard is computed when it is loaded. An app that opens at
 login may stay open for days, so `App.tsx` reloads when the window regains focus and just after
 each local midnight. This was found by the code review, not by a test: tests run for seconds.
+
+### Milestone 4: "What should I work on now?"
+
+**Requirements:** CA-4.1 to CA-4.6; design in [ADR-006](decisions/ADR-006-next-task-rules.md).
+
+**Technique — a lexicographic sort key.** Each task gets a list of values, one per rule, and lists
+are compared element by element, like words in a dictionary:
+
+```ts
+return [
+  overdueDays > 0 ? -overdueDays : 0, // rule 2: more days late sorts first
+  dueSoon ? daysBetween(today, due) : SOON_DAYS + 1, // rule 3
+  PRIORITY_RANK[task.priority], // rule 4: high = 0, low = 2
+  due ?? '9999-12-31', // rule 5: no date sorts last
+  task.createdAt, // rule 6: oldest first
+  task.title, // stable tie-breaker
+];
+```
+
+The second value only matters when the first ones are equal, and so on. Adding or reordering a
+rule means editing this list, the `RULES` sentences next to it, and the tests.
+
+**Testing rules one by one.** Each test in `tests/domain/next-task.test.ts` builds tasks that tie
+on the earlier rules and differ on exactly one, so that rule is the one deciding. A test where
+several rules disagree would pass or fail without telling you which rule is wrong.
+
+**Honest explanations.** The card only lists reasons that the rules use. A reason such as
+"already started" sounded helpful but no rule looks at it, so showing it would have misled the
+user about why the task was chosen.
 
 ---
 
@@ -455,6 +484,13 @@ question — _what could go wrong for the user?_ — and finds risks the specifi
 | `npm run verify` (102 unit + integration tests) | Passed                                                             |
 | `npm run test:e2e` (3 end-to-end tests)         | Passed                                                             |
 | Reload after midnight                           | **Not covered by an automated test** (checked by reading the code) |
+
+### Results recorded for milestone 4 (2026-10-25)
+
+| Check                                           | Result |
+| ----------------------------------------------- | ------ |
+| `npm run verify` (116 unit + integration tests) | Passed |
+| `npm run test:e2e` (4 end-to-end tests)         | Passed |
 
 ---
 
