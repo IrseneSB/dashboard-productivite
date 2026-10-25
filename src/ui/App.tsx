@@ -14,6 +14,8 @@ import { Gauge, ProgressBar } from './components/Gauge';
 import { QuickAddForm } from './components/QuickAddForm';
 import { FocusPanel } from './components/FocusPanel';
 import { NextTaskCard } from './components/NextTaskCard';
+import { SettingsPanel, StartupQuestion } from './components/SettingsPanel';
+import type { StartupState } from '../shared/api';
 import { TaskItem } from './components/TaskItem';
 import { ActionContext, createRunAction, useRunAction } from './useAction';
 
@@ -21,6 +23,23 @@ export function App() {
   const [dashboard, setDashboard] = useState<DashboardView | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [editing, setEditing] = useState<Editing | null>(null);
+  const [startup, setStartup] = useState<StartupState | null>(null);
+  const [askStartup, setAskStartup] = useState(false);
+
+  // Settings are read once at start. The first-launch question only makes
+  // sense in the installed app, where the switch actually works.
+  useEffect(() => {
+    void (async () => {
+      const [state, question] = await Promise.all([
+        window.api.getStartupState(),
+        window.api.getStartupQuestion(),
+      ]);
+      if (state.ok) setStartup(state.value);
+      if (state.ok && question.ok) {
+        setAskStartup(state.value.available && question.value.pending);
+      }
+    })();
+  }, []);
 
   const reload = useCallback(async () => {
     const result = await window.api.getDashboard();
@@ -80,9 +99,18 @@ export function App() {
   return (
     <ActionContext.Provider value={runAction}>
       <main className="app">
-        <header>
+        <header className="app-header">
           <h1>Dashboard</h1>
+          <SettingsPanel startup={startup} onStartupChange={setStartup} />
         </header>
+
+        {/* Hidden as soon as start at login is on, however it was turned on. */}
+        {askStartup && !startup?.enabled && (
+          <StartupQuestion
+            onAnswered={() => setAskStartup(false)}
+            onStartupChange={setStartup}
+          />
+        )}
 
         <QuickAddForm dashboard={dashboard} onCreated={reload} />
         {error && (

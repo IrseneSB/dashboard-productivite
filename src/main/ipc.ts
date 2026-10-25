@@ -1,21 +1,30 @@
-// Registers one IPC handler per use case. This file is the only place where
-// the main process listens to the renderer, so it is also where every input
-// coming from the UI is treated as untrusted and every error is converted
-// into a Result.
+// Registers one IPC handler per API function. This file is the only place
+// where the main process listens to the renderer, so it is also where every
+// input coming from the UI is treated as untrusted and every error is
+// converted into a Result.
 
 import { ipcMain } from 'electron';
-import type { UseCases } from '../application/use-cases';
 import { ValidationError } from '../domain/validation';
-import { CHANNELS, type Result } from '../shared/api';
+import { CHANNELS, type DashboardApi, type Result } from '../shared/api';
+import { StartupError } from './startup';
 
-function toResult<T>(run: () => T): Result<T> {
+/** Errors whose message is written for the user and can be shown as-is. */
+const isUserFacing = (
+  error: unknown,
+): error is ValidationError | StartupError =>
+  error instanceof ValidationError || error instanceof StartupError;
+
+async function toResult<T>(run: () => T | Promise<T>): Promise<Result<T>> {
   try {
-    return { ok: true, value: run() };
+    return { ok: true, value: await run() };
   } catch (error) {
-    if (error instanceof ValidationError) {
+    if (isUserFacing(error)) {
       return {
         ok: false,
-        error: { field: error.field, message: error.message },
+        error: {
+          field: error instanceof ValidationError ? error.field : null,
+          message: error.message,
+        },
       };
     }
     // Unexpected failure (bug, disk error...): keep the details in the log,
@@ -31,15 +40,22 @@ function toResult<T>(run: () => T): Result<T> {
   }
 }
 
-export function registerIpcHandlers(useCases: UseCases): void {
-  // Every API function has a use case with the same name and arguments, so one
-  // loop registers them all; adding a use case to DashboardApi and CHANNELS is
-  // enough to expose it. Arguments arrive from the renderer untyped: the use
-  // cases validate them before use.
+/**
+ * One function per API method, with the same name: the use cases, plus the
+ * few operations that need the operating system (login item, save dialog).
+ */
+export type Handlers = {
+  [K in keyof DashboardApi]: (...args: never[]) => unknown;
+};
+
+export function registerIpcHandlers(handlers: Handlers): void {
+  // One loop registers them all; adding a function to DashboardApi, CHANNELS
+  // and the handlers is enough to expose it. Arguments arrive from the
+  // renderer untyped: each handler validates them before use.
   for (const name of Object.keys(CHANNELS) as (keyof typeof CHANNELS)[]) {
-    const useCase = useCases[name] as (...args: unknown[]) => unknown;
+    const handler = handlers[name] as (...args: unknown[]) => unknown;
     ipcMain.handle(CHANNELS[name], (_event, ...args: unknown[]) =>
-      toResult(() => useCase(...args)),
+      toResult(() => handler(...args)),
     );
   }
 }

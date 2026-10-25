@@ -3,7 +3,7 @@
 How this application was built, decision by decision. It describes the **actual** code in this
 repository and is updated at every milestone.
 
-**State of this guide:** updated at the end of **milestone 4** ("what should I work on now?"). Chapters marked
+**State of this guide:** updated at the end of **milestone 5** (start at login, export). Chapters marked
 _planned_ describe work that has not been done yet.
 
 ---
@@ -199,7 +199,7 @@ tests/
   e2e/             the packaged app driven by Playwright (helpers.ts shared)
 docs/
   requirements.md, learning-guide.md, journal.md, process-evaluation.md
-  decisions/       ADR-001 … ADR-006
+  decisions/       ADR-001 … ADR-007
 forge.config.mts   how Electron Forge builds and packages the app
 vite.*.config.mts  one bundler configuration per process (main, preload, renderer)
 vitest*.config.mts unit/integration tests, and end-to-end tests
@@ -494,10 +494,47 @@ question — _what could go wrong for the user?_ — and finds risks the specifi
 
 ---
 
-## Chapter 9 — Packaging and desktop integration (_planned, milestones 5–6_)
+## Chapter 9 — Packaging and desktop integration
 
-So far: `electron-forge package` builds the app (used by the end-to-end test). Not yet done:
-the Windows installer, start at login, and their verification.
+### Start at login (milestone 5, [ADR-007](decisions/ADR-007-start-at-login.md))
+
+**How it works.** Windows keeps a list of programs to start when a user logs in. Electron writes
+to it with `app.setLoginItemSettings`. The app does not store its own "on/off" flag: it asks
+Windows each time (`getLoginItemSettings`), so the switch cannot disagree with what Windows does.
+
+```ts
+app.setLoginItemSettings({ openAtLogin: enabled, ...target() });
+const after = getState();
+if (after.enabled !== enabled)
+  throw new StartupError('Windows did not accept the change…');
+```
+
+Write, then **read back**: the result shown to the user is what Windows reports, not what the app
+asked for. This is the same "evidence over claims" rule used for tests.
+
+**Development vs installed app.** In development, `process.execPath` is `electron.exe` inside
+`node_modules`. Registering it would start a bare Electron at login, not the dashboard. The app
+therefore disables the switch when `app.isPackaged` is false and explains why.
+
+**How to enable or disable it.** Settings (top right) → "Open at Windows login". On the first
+launch of the installed app, a banner asks once.
+
+**Diagnosing startup problems.**
+
+1. Settings shows the state Windows reports. If it says "on" but the app does not open, check
+   Task Manager → Startup apps: an entry can be disabled there.
+2. The entry is registered for the Squirrel launcher (`%LOCALAPPDATA%<app><App>.exe`).
+   If the app was moved or reinstalled elsewhere, turn the switch off and on again.
+
+### Export (milestone 5)
+
+"Export my data…" asks where to save, writes the JSON to `<name>.tmp`, then renames it. If the
+write fails, the temporary file is removed. A half-written file never carries the final name.
+
+### Packaging (_milestone 6, planned_)
+
+So far `electron-forge package` builds the app (used by the end-to-end tests). Not yet done: the
+Windows installer and its verification.
 
 ## Chapter 10 — GitHub and professional workflow (_planned, milestone 6_)
 

@@ -10,6 +10,7 @@ export function createMemoryStore(): Store {
   let projects = new Map<Id, Project>();
   let tasks = new Map<Id, Task>();
   let inTransaction = false;
+  let settings = new Map<string, string>();
   // Copies prevent a caller from mutating stored data by accident,
   // which a real database would never allow either.
   const copy = <T>(value: T | undefined): T | undefined =>
@@ -38,6 +39,8 @@ export function createMemoryStore(): Store {
     updateTask: (task) => update(tasks, task, 'Task'),
     getTask: (id) => copy(tasks.get(id)),
     listTasks: () => [...tasks.values()].map((t) => ({ ...t })),
+    getSetting: (key) => settings.get(key),
+    setSetting: (key, value) => void settings.set(key, value),
     listSubtasks: (parentTaskId) =>
       [...tasks.values()]
         .filter((t) => t.parentTaskId === parentTaskId)
@@ -52,11 +55,12 @@ export function createMemoryStore(): Store {
         new Map(goals),
         new Map(projects),
         new Map(tasks),
+        new Map(settings),
       ] as const;
       try {
         return work();
       } catch (error) {
-        [goals, projects, tasks] = saved;
+        [goals, projects, tasks, settings] = saved;
         throw error;
       } finally {
         inTransaction = false;

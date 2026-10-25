@@ -281,7 +281,7 @@ describe('migration 1 → 2 on an existing database (CA-2.9)', () => {
 
     const upgraded = openDatabase(path);
     openDbs.push(upgraded);
-    expect(currentVersion(upgraded)).toBe(2);
+    expect(currentVersion(upgraded)).toBe(MIGRATIONS.at(-1)!.version);
     const store = createSqliteStore(upgraded);
     expect(store.getGoal('g1')?.title).toBe('Old goal');
     expect(store.getTask('t1')).toMatchObject({
@@ -335,3 +335,41 @@ describe.each([
     });
   },
 );
+
+describe.each([
+  ['memory', () => createMemoryStore()],
+  ['sqlite', () => createSqliteStore(open())],
+] as [string, () => Store][])(
+  'Store contract, settings (%s)',
+  (_name, makeStore) => {
+    it('reads back a setting, overwrites it, and returns undefined when unset', () => {
+      const store = makeStore();
+      expect(store.getSetting('k')).toBeUndefined();
+      store.setSetting('k', 'one');
+      store.setSetting('k', 'two');
+      expect(store.getSetting('k')).toBe('two');
+    });
+  },
+);
+
+describe('migration 2 → 3 on an existing database (CA-5.6)', () => {
+  it('adds the settings table without losing data', () => {
+    const path = join(dir, 'v2.db');
+    const v2 = new DatabaseSync(path);
+    v2.exec('PRAGMA foreign_keys = ON');
+    migrate(v2, MIGRATIONS.slice(0, 2));
+    v2.exec(
+      `INSERT INTO tasks (id, project_id, parent_task_id, title, notes, priority, due_date, status, completed_at, created_at, updated_at)
+       VALUES ('t1', NULL, NULL, 'Kept', '', 'medium', NULL, 'todo', NULL, '${at}', '${at}')`,
+    );
+    v2.close();
+
+    const upgraded = openDatabase(path);
+    openDbs.push(upgraded);
+    expect(currentVersion(upgraded)).toBe(3);
+    const store = createSqliteStore(upgraded);
+    expect(store.getTask('t1')?.title).toBe('Kept');
+    store.setSetting('k', 'v');
+    expect(store.getSetting('k')).toBe('v');
+  });
+});

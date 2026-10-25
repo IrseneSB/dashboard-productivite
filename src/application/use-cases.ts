@@ -85,6 +85,19 @@ export type UpdateTaskInput = Partial<
   status?: string;
 };
 
+/** Bumped when the exported file's shape changes. */
+export const EXPORT_SCHEMA_VERSION = 1;
+const STARTUP_QUESTION_KEY = 'startupQuestionAnsweredAt';
+
+export interface ExportFile {
+  format: 'productivity-dashboard-export';
+  schemaVersion: number;
+  exportedAt: string;
+  goals: Goal[];
+  projects: Project[];
+  tasks: Task[];
+}
+
 export interface TaskView {
   task: Task;
   subtasks: Task[];
@@ -620,6 +633,34 @@ export function createUseCases({ store, now, newId }: Dependencies) {
     };
   }
 
+  // ---- milestone 5: export and the first-launch question
+
+  /**
+   * Everything the user owns, as one JSON-ready object (A3). The schema
+   * version lets a future import know how to read the file.
+   */
+  function exportData(): ExportFile {
+    return {
+      format: 'productivity-dashboard-export',
+      schemaVersion: EXPORT_SCHEMA_VERSION,
+      exportedAt: timestamp(),
+      goals: store.listGoals(),
+      projects: store.listProjects(),
+      tasks: store.listTasks(),
+    };
+  }
+
+  /** Whether the first-launch question about starting at login is still to be asked. */
+  function getStartupQuestion(): { pending: boolean } {
+    return { pending: store.getSetting(STARTUP_QUESTION_KEY) === undefined };
+  }
+
+  /** Records that the user answered (yes or not now), so it is asked only once. */
+  function answerStartupQuestion(): { pending: boolean } {
+    store.setSetting(STARTUP_QUESTION_KEY, timestamp());
+    return { pending: false };
+  }
+
   return {
     createGoal,
     updateGoal,
@@ -632,6 +673,9 @@ export function createUseCases({ store, now, newId }: Dependencies) {
     setTaskStatus,
     postponeTask,
     getDashboard,
+    exportData,
+    getStartupQuestion,
+    answerStartupQuestion,
   };
 }
 

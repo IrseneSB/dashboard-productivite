@@ -40,6 +40,28 @@ export interface DashboardApi {
   updateTask(id: Id, input: UpdateTaskInput): Promise<Result<Task>>;
   setTaskStatus(taskId: Id, status: string): Promise<Result<Task>>;
   postponeTask(taskId: Id, days: number): Promise<Result<Task>>;
+
+  // Milestone 5: settings and export.
+  getStartupState(): Promise<Result<StartupState>>;
+  setStartAtLogin(enabled: boolean): Promise<Result<StartupState>>;
+  getStartupQuestion(): Promise<Result<{ pending: boolean }>>;
+  answerStartupQuestion(): Promise<Result<{ pending: boolean }>>;
+  exportToFile(): Promise<Result<ExportResult>>;
+}
+
+/** Start at Windows login, as Windows reports it (see src/main/startup.ts). */
+export interface StartupState {
+  /** false in development: a dev build must never register itself at login. */
+  available: boolean;
+  enabled: boolean;
+  /** Why the switch is disabled, shown to the user. */
+  reason: string | null;
+}
+
+export interface ExportResult {
+  /** false when the user cancelled the save dialog. */
+  saved: boolean;
+  path: string | null;
 }
 
 /** IPC channel names, shared so the two sides cannot disagree on a spelling. */
@@ -55,4 +77,9 @@ export const CHANNELS = {
   updateTask: 'tasks:update',
   setTaskStatus: 'tasks:setStatus',
   postponeTask: 'tasks:postpone',
+  getStartupState: 'settings:getStartup',
+  setStartAtLogin: 'settings:setStartAtLogin',
+  getStartupQuestion: 'settings:getStartupQuestion',
+  answerStartupQuestion: 'settings:answerStartupQuestion',
+  exportToFile: 'data:exportToFile',
 } as const satisfies Record<keyof DashboardApi, string>;

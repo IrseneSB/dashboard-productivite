@@ -6,7 +6,9 @@ import { app, BrowserWindow, dialog } from 'electron';
 import started from 'electron-squirrel-startup';
 import { createUseCases } from '../application/use-cases';
 import { createSqliteStore, openDatabase } from '../data/sqlite-store';
+import { exportToFile } from './export-file';
 import { registerIpcHandlers } from './ipc';
+import { createStartup } from './startup';
 
 // The Windows installer (Squirrel) launches the app once with special
 // arguments to create shortcuts; in that case we must exit immediately.
@@ -73,7 +75,16 @@ app.whenReady().then(() => {
       now: () => new Date(),
       newId: () => randomUUID(),
     });
-    registerIpcHandlers(useCases);
+    const startup = createStartup(app, process.execPath);
+    registerIpcHandlers({
+      ...useCases,
+      getStartupState: () => startup.getState(),
+      setStartAtLogin: (enabled: boolean) => startup.setEnabled(enabled),
+      exportToFile: () =>
+        exportToFile(dialog, mainWindow, app.getPath('documents'), () =>
+          useCases.exportData(),
+        ),
+    });
   } catch (error) {
     // Without a database the app is useless; say so plainly and where the file is.
     console.error('[main] cannot open database', error);

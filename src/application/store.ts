@@ -28,6 +28,10 @@ export interface Store {
   /** Direct subtasks of a task, oldest first. */
   listSubtasks(parentTaskId: Id): Task[];
 
+  /** Small app preferences (milestone 5). undefined = never set. */
+  getSetting(key: string): string | undefined;
+  setSetting(key: string, value: string): void;
+
   /**
    * Runs `work` as one unit: if it throws, every write it made is undone.
    * Used when one user action changes several rows (moving a task and its

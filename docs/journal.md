@@ -2,6 +2,23 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Milestone 5: start at login and export
+
+- Read Electron's documentation before coding: for a Squirrel install, register the launcher one
+  folder above the versioned executable (ADR-007).
+- Migration 3 adds a `settings` table (first-launch question). Windows remains the source of
+  truth for the login item itself.
+- IPC handlers became async-capable (the save dialog is asynchronous); errors from Windows are
+  shown as-is (`StartupError`).
+- e2e: the native save dialog is replaced in the main process with `app.evaluate`, so the test
+  writes and reads a real file without a human clicking.
+- Code review: 4 findings — Task Manager "disabled" state ignored (fixed, using
+  `executableWillLaunchAtLogin`), temporary file left after a failed export (fixed), first-launch
+  question shown after enabling from Settings (fixed), no e2e coverage of the installed app
+  (deferred to milestone 6, manual check).
+- Results: `npm run verify` passed (132 tests); `npm run test:e2e` passed (5 tests).
+- **Not verified yet:** real start at login on an installed copy (milestone 6).
+
 ## 2026-10-25 — Milestone 4: "What should I work on now?"
 
 - Owner asked to chain milestones without waiting for confirmation (publication still needs approval).

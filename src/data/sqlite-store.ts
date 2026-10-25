@@ -98,6 +98,10 @@ export function createSqliteStore(db: DatabaseSync): Store {
     getTask: db.prepare('SELECT * FROM tasks WHERE id = ?'),
     listTasks: db.prepare('SELECT * FROM tasks ORDER BY created_at, id'),
     // Uses the tasks_parent_task_id index: reads only the children.
+    getSetting: db.prepare('SELECT value FROM settings WHERE key = ?'),
+    setSetting: db.prepare(
+      'INSERT INTO settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value',
+    ),
     listSubtasks: db.prepare(
       'SELECT * FROM tasks WHERE parent_task_id = ? ORDER BY created_at, id',
     ),
@@ -149,6 +153,9 @@ export function createSqliteStore(db: DatabaseSync): Store {
     listTasks: () => all(q.listTasks.all(), toTask),
     listSubtasks: (parentTaskId) =>
       all(q.listSubtasks.all(parentTaskId), toTask),
+    getSetting: (key) =>
+      (q.getSetting.get(key) as { value: string } | undefined)?.value,
+    setSetting: (key, value) => void q.setSetting.run(key, value),
 
     transaction: (work) => {
       // Already inside a transaction: the outer one decides commit or rollback.

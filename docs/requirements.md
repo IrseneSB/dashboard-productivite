@@ -103,9 +103,21 @@ Rules (ADR-006), applied in this order, each one only breaking ties of the previ
 | CA-4.5 | From the suggestion, the task can be started (in progress) or marked done; the suggestion then updates                    | `next-task.e2e.ts`                      |
 | CA-4.6 | With nothing to suggest, the card says why in one line                                                                    | `next-task.test.ts`, `next-task.e2e.ts` |
 
+### Milestone 5 — start at login and export
+
+Decision D4 applies: the app opens its normal window at login; no tray icon, no background process.
+
+| Id     | Acceptance criterion                                                                                                                                    | Verified by                                               |
+| ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------- |
+| CA-5.1 | Settings show an "Open at Windows login" switch reflecting the real Windows setting                                                                     | `startup.test.ts`, manual check of the installed app (M6) |
+| CA-5.2 | Turning it on or off changes the Windows login item; a failure is reported, never hidden                                                                | `startup.test.ts`, manual check (M6)                      |
+| CA-5.3 | In development (not installed) the switch is disabled with the reason, so a dev build never registers itself at login                                   | `settings.e2e.ts`                                         |
+| CA-5.4 | On first launch the app asks once whether to open at login; "Not now" is remembered after a restart                                                     | `milestone-5.test.ts`, `settings.e2e.ts`                  |
+| CA-5.5 | "Export my data" writes one JSON file (goals, projects, tasks, schema version, export date) to a location chosen by the user; cancelling writes nothing | `milestone-5.test.ts`, `settings.e2e.ts`                  |
+| CA-5.6 | A database from milestone 4 is upgraded to the new schema (settings table) without data loss                                                            | `sqlite-store.test.ts`                                    |
+
 ### Later MVP milestones (criteria written when the milestone starts)
 
-- **M5** Settings: start at login (D4); JSON export (A3).
 - **M6** Packaging (Windows installer), install and startup verification, GitHub publication.
 
 ## Excluded from the MVP

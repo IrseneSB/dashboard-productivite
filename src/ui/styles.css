@@ -401,3 +401,62 @@ button.link.danger {
 .rule-note {
   font-size: 12px;
 }
+
+/* ---- milestone 5: settings and first-launch question ---- */
+
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+.settings {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 12px;
+  max-width: 360px;
+}
+.settings summary {
+  cursor: pointer;
+  font-weight: 600;
+}
+.settings[open] {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-bottom: 12px;
+}
+.settings button,
+.startup-question button {
+  font: inherit;
+  padding: 5px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--surface);
+  cursor: pointer;
+}
+.startup-question {
+  background: #eef4ff;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  padding: 12px 16px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+.startup-question p {
+  margin: 0;
+  flex-basis: 100%;
+}
+.startup-question button.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}
+.switch {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}

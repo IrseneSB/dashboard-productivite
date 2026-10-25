@@ -75,6 +75,19 @@ export const MIGRATIONS: readonly Migration[] = [
       CREATE INDEX tasks_parent_task_id ON tasks(parent_task_id);
     `,
   },
+  {
+    version: 3,
+    description: 'app settings (milestone 5)',
+    // Key/value pairs for small app preferences, e.g. whether the first-launch
+    // question about starting at login was already answered. The login item
+    // itself is NOT stored here: Windows is the source of truth for it.
+    sql: `
+      CREATE TABLE settings (
+        key   TEXT PRIMARY KEY,
+        value TEXT NOT NULL
+      );
+    `,
+  },
 ];
 
 export function currentVersion(db: DatabaseSync): number {
