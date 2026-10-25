@@ -3,7 +3,7 @@
 All notable changes. Versions follow [Semantic Versioning](https://semver.org/):
 MAJOR for changes that break existing data or behavior, MINOR for new features, PATCH for fixes.
 
-## 0.1.0 — 2026-10-25 (first release candidate, not published yet)
+## 0.1.0 — 2026-10-25
 
 ### Added
 

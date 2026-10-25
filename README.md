@@ -4,7 +4,7 @@ A local-first Windows desktop app that connects **long-term goals â†’ projects â
 progress with a gauge, and suggests what to work on next. Your data stays on your computer
 in a SQLite file.
 
-> **Status: all 6 milestones built (version 0.1.0, not published yet).** You can create, edit, archive and restore goals and projects;
+> **Status: version 0.1.0, all 6 milestones built.** You can create, edit, archive and restore goals and projects;
 > create, edit, postpone, cancel and complete tasks with one level of subtasks; and see progress.
 > A Focus panel shows overdue, upcoming, blocked and recently completed work. A card suggests
 > what to work on next, with its reasons. Settings offer start at login
@@ -56,4 +56,4 @@ npm start
 
 ## License
 
-Not chosen yet. `package.json` says MIT (the template default); to be confirmed before publication.
+[MIT](LICENSE).
