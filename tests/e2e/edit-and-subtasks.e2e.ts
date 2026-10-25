@@ -2,7 +2,7 @@
 // edit, cancel, archive and restore, in the real app.
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDataDir, launch, quickAdd } from './helpers';
+import { createDataDir, launch, quickAdd, tree } from './helpers';
 
 let data: ReturnType<typeof createDataDir>;
 
@@ -28,29 +28,31 @@ describe('milestone 2 in the real app', () => {
       });
 
       // CA-2.10: priority and due date are shown.
-      await page.getByText('due 2026-11-02').waitFor();
+      await tree(page).getByText('due 2026-11-02').waitFor();
       expect(await page.locator('.badge.priority-high').count()).toBe(1);
 
       // CA-2.6: subtasks, with their own progress on the parent.
       for (const title of ['Chapter 1', 'Chapter 2']) {
-        await page.getByLabel('Add subtask to Study').click();
-        await page.getByLabel('New subtask of Study').fill(title);
+        await tree(page).getByLabel('Add subtask to Study').click();
+        await tree(page).getByLabel('New subtask of Study').fill(title);
         await page
           .getByRole('button', { name: 'Add', exact: true })
           .last()
           .click();
-        await page.getByText(title, { exact: true }).waitFor();
+        await tree(page).getByText(title, { exact: true }).waitFor();
       }
       await page.getByText('0 of 2 subtasks').waitFor();
 
       // CA-2.7: the parent cannot be done while subtasks are open.
-      await page.getByRole('checkbox', { name: 'Study', exact: true }).click();
+      await tree(page)
+        .getByRole('checkbox', { name: 'Study', exact: true })
+        .click();
       await alert.waitFor();
       expect(await alert.textContent()).toContain(
         'Finish or cancel its 2 open subtasks first.',
       );
 
-      await page
+      await tree(page)
         .getByRole('checkbox', { name: 'Chapter 1', exact: true })
         .click();
       await page.getByText('1 of 2 subtasks').waitFor();
@@ -58,11 +60,11 @@ describe('milestone 2 in the real app', () => {
       await page.getByText('0 of 1 task done').waitFor();
 
       // CA-2.5: postpone by one day.
-      await page.getByLabel('Postpone Study by 1 day').click();
-      await page.getByText('due 2026-11-03').waitFor();
+      await tree(page).getByLabel('Postpone Study by 1 day').click();
+      await tree(page).getByText('due 2026-11-03').waitFor();
 
       // CA-2.1: an invalid edit is refused, a valid one is saved.
-      await page.getByLabel('Edit Study').click();
+      await tree(page).getByLabel('Edit Study').click();
       const dialog = page.getByRole('dialog');
       await dialog.getByLabel('Title').fill('   ');
       await dialog.getByRole('button', { name: 'Save' }).click();
@@ -71,11 +73,13 @@ describe('milestone 2 in the real app', () => {
       );
       await dialog.getByLabel('Title').fill('Study for the quiz');
       await dialog.getByRole('button', { name: 'Save' }).click();
-      await page.getByText('Study for the quiz', { exact: true }).waitFor();
+      await tree(page)
+        .getByText('Study for the quiz', { exact: true })
+        .waitFor();
 
       // CA-2.4: cancel the remaining subtask, then the parent can be done.
-      await page.getByLabel('Cancel Chapter 2').click();
-      await page
+      await tree(page).getByLabel('Cancel Chapter 2').click();
+      await tree(page)
         .getByRole('checkbox', { name: 'Study for the quiz', exact: true })
         .click();
       await page.getByText('1 of 1 task done').waitFor();

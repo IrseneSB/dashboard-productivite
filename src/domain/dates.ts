@@ -16,6 +16,15 @@ export function addDays(date: IsoDate, days: number): IsoDate {
   return new Date(Date.UTC(y, m - 1, d + days)).toISOString().slice(0, 10);
 }
 
+/** Whole days from `from` to `to` (negative when `to` is earlier). */
+export function daysBetween(from: IsoDate, to: IsoDate): number {
+  const utc = (date: IsoDate) => {
+    const [y, m, d] = date.split('-').map(Number);
+    return Date.UTC(y, m - 1, d);
+  };
+  return Math.round((utc(to) - utc(from)) / 86_400_000);
+}
+
 /**
  * New due date when postponing (assumption A9): move the current due date,
  * or count from today when the task has none. A task that is already overdue

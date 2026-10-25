@@ -3,7 +3,7 @@
 How this application was built, decision by decision. It describes the **actual** code in this
 repository and is updated at every milestone.
 
-**State of this guide:** updated at the end of **milestone 2** (edit, archive, cancel, postpone, subtasks). Chapters marked
+**State of this guide:** updated at the end of **milestone 3** (focus sections). Chapters marked
 _planned_ describe work that has not been done yet.
 
 ---
@@ -298,6 +298,35 @@ context gives it to nested components (`TaskItem`) without passing callbacks thr
 **How to extend safely:** a new task action = a use case + its tests, an entry in `DashboardApi`
 and `CHANNELS`, a button calling `run(() => window.api.…)`, and a step in an e2e test.
 
+### Milestone 3: focus sections
+
+**Requirements:** CA-3.1 to CA-3.7; assumptions A10–A12.
+
+**Design decision — a pure function for the sections.** `computeFocus(items, today)` in
+`src/domain/focus.ts` receives the visible tasks with their context and the user's local date,
+and returns the four lists. Because it takes `today` as a parameter instead of reading the clock,
+the tests can check every boundary (due today, 7 days ahead, 8 days ahead) with fixed dates.
+
+```ts
+if (task.dueDate !== null && task.dueDate < today) {
+  overdue.push({ ...item, daysLate: daysBetween(task.dueDate, today) });
+} else if (task.dueDate !== null && task.dueDate <= horizon) {
+  upcoming.push({ ...item, daysLeft: daysBetween(today, task.dueDate) });
+}
+```
+
+ISO dates (`YYYY-MM-DD`) sort the same way as text, so `<` and `<=` on strings compare dates
+correctly. `daysBetween` works in UTC on calendar days, so daylight-saving changes cannot turn
+"1 day" into 0.96 days.
+
+**Where "visible" is decided.** `getDashboard` walks the same goal → project → task structure it
+already built for the tree, and collects only those tasks. Archived work is therefore excluded
+from the Focus panel by construction, not by a second filter that could drift from the first.
+
+**Time in a long-running app.** The dashboard is computed when it is loaded. An app that opens at
+login may stay open for days, so `App.tsx` reloads when the window regains focus and just after
+each local midnight. This was found by the code review, not by a test: tests run for seconds.
+
 ---
 
 ## Chapter 7 — Tracing one user action end to end
@@ -418,6 +447,14 @@ question — _what could go wrong for the user?_ — and finds risks the specifi
 | `npm run verify` (typecheck, lint, format, **89** unit + integration tests) | Passed                                                                  |
 | `npm run test:e2e` (package + 2 end-to-end tests)                           | Passed after the selector fix above                                     |
 | Confirmation dialog when cancelling a parent with open subtasks             | **Not covered by an automated test** (checked by reading the code only) |
+
+### Results recorded for milestone 3 (2026-10-25)
+
+| Check                                           | Result                                                             |
+| ----------------------------------------------- | ------------------------------------------------------------------ |
+| `npm run verify` (102 unit + integration tests) | Passed                                                             |
+| `npm run test:e2e` (3 end-to-end tests)         | Passed                                                             |
+| Reload after midnight                           | **Not covered by an automated test** (checked by reading the code) |
 
 ---
 

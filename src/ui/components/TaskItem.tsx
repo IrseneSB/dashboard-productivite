@@ -95,17 +95,20 @@ export function TaskItem({ view, onEdit }: Props) {
   );
 }
 
-function TaskRow({
+export function TaskRow({
   task,
   onEdit,
   extra,
   openSubtasks = 0,
+  compact = false,
 }: {
   task: Task;
   onEdit: (task: Task) => void;
   extra?: ReactNode;
   /** Open subtasks that cancelling this task would also cancel. */
   openSubtasks?: number;
+  /** Focus panel rows: no due date (the row says "late"/"in N days") and fewer actions. */
+  compact?: boolean;
 }) {
   const run = useRunAction();
   const open = task.status !== 'done' && task.status !== 'cancelled';
@@ -131,7 +134,9 @@ function TaskRow({
       <span className={`badge priority-${task.priority}`}>{task.priority}</span>
       {task.status === 'cancelled' && <span className="badge">cancelled</span>}
       {task.status === 'blocked' && <span className="badge">blocked</span>}
-      {task.dueDate && <span className="muted">due {task.dueDate}</span>}
+      {task.dueDate && !compact && (
+        <span className="muted">due {task.dueDate}</span>
+      )}
       {extra}
       <span className="actions">
         {open && (
@@ -144,14 +149,16 @@ function TaskRow({
             >
               +1 day
             </button>
-            <button
-              type="button"
-              className="link"
-              aria-label={`Postpone ${task.title} by 1 week`}
-              onClick={() => run(() => window.api.postponeTask(task.id, 7))}
-            >
-              +1 week
-            </button>
+            {!compact && (
+              <button
+                type="button"
+                className="link"
+                aria-label={`Postpone ${task.title} by 1 week`}
+                onClick={() => run(() => window.api.postponeTask(task.id, 7))}
+              >
+                +1 week
+              </button>
+            )}
           </>
         )}
         <button
@@ -162,7 +169,7 @@ function TaskRow({
         >
           Edit
         </button>
-        {task.status === 'cancelled' ? (
+        {compact ? null : task.status === 'cancelled' ? (
           <button
             type="button"
             className="link"

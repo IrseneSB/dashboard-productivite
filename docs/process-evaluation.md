@@ -35,6 +35,16 @@ did well and badly, based on observable results.
 specified; the reviewer questioned what was _not_ specified (user risk, production-only
 behavior, malformed input). The cost was one review pass per milestone, not per change.
 
+## Milestone 3
+
+| Aspect                | Observation                                                                                                                                | Evidence                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------------------------------- |
+| Looking at the result | A screenshot of the real window showed a layout problem that no assertion checked                                                          | `journal.md`                    |
+| Anticipating breakage | Duplicate controls (panel + tree) were spotted before the old tests failed                                                                 | `tests/e2e/helpers.ts` (`tree`) |
+| Independent reviewer  | 6 findings, including one that only appears in real use (app open past midnight, which start-at-login makes likely)                        | Learning guide, ch. 8           |
+| Interruption          | A tool outage stopped the session mid-change; the state was reported honestly (what was applied, what was not, untested) and resumed later | `journal.md`                    |
+| Owner involvement     | The owner asked to stop waiting for milestone confirmations; publication still requires explicit approval                                  | —                               |
+
 ## Still to evaluate
 
 - Whether requirements stay traced as features are added (M3–M6).

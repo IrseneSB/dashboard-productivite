@@ -22,17 +22,23 @@ before reaching long-term goals, by linking goals → projects → tasks. **Conf
 
 ## Assumptions (change any of them by asking)
 
-| #   | Assumption                                                                                                        | Why it is reasonable                                                                                  |
-| --- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------- |
-| A1  | One level of subtasks in the MVP                                                                                  | Recursion complicates the UI and progress; one level covers the quiz example                          |
-| A2  | "Blocked" is set manually in the MVP; real task dependencies come in Phase 2                                      | Dependencies need cycle detection and a dedicated UI                                                  |
-| A3  | JSON export is the only backup in the MVP                                                                         | Simple, inspectable, enough for one user                                                              |
-| A4  | A project supports at most one goal                                                                               | Keeps progress unambiguous (a task is never counted twice)                                            |
-| A5  | Goals and projects are archived, never hard-deleted, once they have children                                      | Protects history and progress data                                                                    |
-| A6  | Goal and project progress count top-level tasks only; subtasks show their own "2 of 5" on the parent              | Keeps option A ("every task counts the same") without counting a parent and its parts twice (ADR-005) |
-| A7  | A parent task cannot be marked done while it has open subtasks                                                    | Prevents a "done" task whose work is visibly unfinished                                               |
-| A8  | No hard delete of tasks in the MVP: a task created by mistake is cancelled                                        | Cancelled tasks leave progress untouched; delete can come later with an undo                          |
-| A9  | "Postpone" moves the due date by 1 day or 1 week, starting from today when the task has no due date or is overdue | Two quick actions cover the common cases; any other date is set by editing                            |
+**A6–A9 were confirmed by the owner on 2026-10-25** after milestone 2. A1–A5 remain assumptions.
+New assumptions for milestone 3: A10–A12 below.
+
+| #   | Assumption                                                                                                               | Why it is reasonable                                                                                  |
+| --- | ------------------------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| A1  | One level of subtasks in the MVP                                                                                         | Recursion complicates the UI and progress; one level covers the quiz example                          |
+| A2  | "Blocked" is set manually in the MVP; real task dependencies come in Phase 2                                             | Dependencies need cycle detection and a dedicated UI                                                  |
+| A3  | JSON export is the only backup in the MVP                                                                                | Simple, inspectable, enough for one user                                                              |
+| A4  | A project supports at most one goal                                                                                      | Keeps progress unambiguous (a task is never counted twice)                                            |
+| A5  | Goals and projects are archived, never hard-deleted, once they have children                                             | Protects history and progress data                                                                    |
+| A6  | Goal and project progress count top-level tasks only; subtasks show their own "2 of 5" on the parent                     | Keeps option A ("every task counts the same") without counting a parent and its parts twice (ADR-005) |
+| A7  | A parent task cannot be marked done while it has open subtasks                                                           | Prevents a "done" task whose work is visibly unfinished                                               |
+| A8  | No hard delete of tasks in the MVP: a task created by mistake is cancelled                                               | Cancelled tasks leave progress untouched; delete can come later with an undo                          |
+| A9  | "Postpone" moves the due date by 1 day or 1 week, starting from today when the task has no due date or is overdue        | Two quick actions cover the common cases; any other date is set by editing                            |
+| A10 | "Upcoming" = due today or in the next 7 days; "recently completed" = done in the last 7 days (at most 10 shown)          | A one-week horizon matches a weekly study rhythm; both numbers are constants that are easy to change  |
+| A11 | Focus sections include subtasks (shown with their parent's name) and exclude anything inside an archived goal or project | Subtasks are real work with their own dates; archived work was set aside on purpose                   |
+| A12 | A task due today is "upcoming (today)", not overdue                                                                      | It can still be done on time                                                                          |
 
 ## MVP features and acceptance criteria
 
@@ -64,9 +70,20 @@ Milestone numbers refer to the roadmap below. `CA-x.y` identifiers are used in t
 | CA-2.9  | A database created by milestone 1 is upgraded to the new schema without losing data                                                                      | `sqlite-store.test.ts` (migration 1 → 2)        |
 | CA-2.10 | Priority and due date can be set when creating a task and are shown in the task list                                                                     | `edit-and-subtasks.e2e.ts`                      |
 
+### Milestone 3 — focus sections on the dashboard
+
+| Id     | Acceptance criterion                                                                                         | Verified by                            |
+| ------ | ------------------------------------------------------------------------------------------------------------ | -------------------------------------- |
+| CA-3.1 | **Overdue** lists open tasks whose due date is before today, oldest first, with "N days late"                | `focus.test.ts`, `focus.e2e.ts`        |
+| CA-3.2 | **Upcoming** lists open tasks due from today to 7 days ahead, soonest first; a task due today says "today"   | `focus.test.ts`, `focus.e2e.ts`        |
+| CA-3.3 | **Blocked** lists open tasks with status blocked; a task can be set to blocked and back from the edit dialog | `focus.test.ts`, `focus.e2e.ts`        |
+| CA-3.4 | **Recently completed** lists tasks done in the last 7 days, newest first, at most 10                         | `focus.test.ts`, `focus.e2e.ts`        |
+| CA-3.5 | Each item shows where it belongs (goal › project › parent task, or Inbox)                                    | `focus.test.ts`, `focus.e2e.ts`        |
+| CA-3.6 | Done, cancelled and archived work never appears in Overdue, Upcoming or Blocked                              | `focus.test.ts`, `milestone-3.test.ts` |
+| CA-3.7 | An empty section says so in one line instead of disappearing                                                 | `focus.e2e.ts`                         |
+
 ### Later MVP milestones (criteria written when the milestone starts)
 
-- **M3** Dashboard sections: overdue, upcoming, blocked, recently completed.
 - **M4** "What should I work on now?" — rule-based suggestion with its reason shown.
 - **M5** Settings: start at login (D4); JSON export (A3).
 - **M6** Packaging (Windows installer), install and startup verification, GitHub publication.

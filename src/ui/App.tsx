@@ -12,6 +12,7 @@ import type { Goal, Project, Task } from '../domain/model';
 import { EditDialog, type Editing } from './components/EditDialog';
 import { Gauge, ProgressBar } from './components/Gauge';
 import { QuickAddForm } from './components/QuickAddForm';
+import { FocusPanel } from './components/FocusPanel';
 import { TaskItem } from './components/TaskItem';
 import { ActionContext, createRunAction, useRunAction } from './useAction';
 
@@ -33,6 +34,28 @@ export function App() {
 
   useEffect(() => {
     void reload();
+  }, [reload]);
+
+  // "Overdue" and "Upcoming" depend on today's date. The app may stay open for
+  // days (it starts at login), so reload when the window comes back into view
+  // and just after each local midnight (code review, M3).
+  useEffect(() => {
+    const onFocus = () => void reload();
+    window.addEventListener('focus', onFocus);
+    let timer: ReturnType<typeof setTimeout>;
+    const scheduleMidnight = () => {
+      const next = new Date();
+      next.setHours(24, 0, 5, 0); // 00:00:05 tomorrow, local time
+      timer = setTimeout(() => {
+        void reload();
+        scheduleMidnight();
+      }, next.getTime() - Date.now());
+    };
+    scheduleMidnight();
+    return () => {
+      window.removeEventListener('focus', onFocus);
+      clearTimeout(timer);
+    };
   }, [reload]);
 
   if (!dashboard) {
@@ -67,6 +90,8 @@ export function App() {
           </p>
         )}
 
+        {!isEmpty && <FocusPanel focus={dashboard.focus} onEdit={editTask} />}
+
         {isEmpty && (
           <section className="empty">
             <h2>Start with a long-term goal</h2>
@@ -77,71 +102,76 @@ export function App() {
           </section>
         )}
 
-        {dashboard.goals.map(({ goal, progress, projects }) => (
-          <section key={goal.id} className="goal">
-            <div className="goal-header">
-              <Gauge progress={progress} label={`Progress of ${goal.title}`} />
-              <div className="grow">
-                <h2>
-                  {goal.title}
-                  {goal.status === 'achieved' && (
-                    <span className="badge success">achieved</span>
+        <div role="region" aria-label="Goals and projects">
+          {dashboard.goals.map(({ goal, progress, projects }) => (
+            <section key={goal.id} className="goal">
+              <div className="goal-header">
+                <Gauge
+                  progress={progress}
+                  label={`Progress of ${goal.title}`}
+                />
+                <div className="grow">
+                  <h2>
+                    {goal.title}
+                    {goal.status === 'achieved' && (
+                      <span className="badge success">achieved</span>
+                    )}
+                  </h2>
+                  {goal.targetDate && (
+                    <p className="muted">Target: {goal.targetDate}</p>
                   )}
-                </h2>
-                {goal.targetDate && (
-                  <p className="muted">Target: {goal.targetDate}</p>
-                )}
-                {goal.successDefinition && (
-                  <p className="muted">Success: {goal.successDefinition}</p>
-                )}
-                {projects.length === 0 && (
-                  <p className="muted">No projects yet.</p>
-                )}
+                  {goal.successDefinition && (
+                    <p className="muted">Success: {goal.successDefinition}</p>
+                  )}
+                  {projects.length === 0 && (
+                    <p className="muted">No projects yet.</p>
+                  )}
+                </div>
+                <ItemActions
+                  title={goal.title}
+                  onEdit={() => editGoal(goal)}
+                  toggle={
+                    goal.status === 'achieved'
+                      ? { label: 'Mark active', status: 'active' }
+                      : { label: 'Mark achieved', status: 'achieved' }
+                  }
+                  setStatus={(status) =>
+                    window.api.setGoalStatus(goal.id, status)
+                  }
+                />
               </div>
-              <ItemActions
-                title={goal.title}
-                onEdit={() => editGoal(goal)}
-                toggle={
-                  goal.status === 'achieved'
-                    ? { label: 'Mark active', status: 'active' }
-                    : { label: 'Mark achieved', status: 'achieved' }
-                }
-                setStatus={(status) =>
-                  window.api.setGoalStatus(goal.id, status)
-                }
-              />
-            </div>
-            {projects.map((view) => (
-              <ProjectCard
-                key={view.project.id}
-                view={view}
-                onEdit={editProject}
-                onEditTask={editTask}
-              />
-            ))}
-          </section>
-        ))}
+              {projects.map((view) => (
+                <ProjectCard
+                  key={view.project.id}
+                  view={view}
+                  onEdit={editProject}
+                  onEditTask={editTask}
+                />
+              ))}
+            </section>
+          ))}
 
-        {dashboard.standaloneProjects.length > 0 && (
-          <section className="goal">
-            <h2>Projects without a goal</h2>
-            {dashboard.standaloneProjects.map((view) => (
-              <ProjectCard
-                key={view.project.id}
-                view={view}
-                onEdit={editProject}
-                onEditTask={editTask}
-              />
-            ))}
-          </section>
-        )}
+          {dashboard.standaloneProjects.length > 0 && (
+            <section className="goal">
+              <h2>Projects without a goal</h2>
+              {dashboard.standaloneProjects.map((view) => (
+                <ProjectCard
+                  key={view.project.id}
+                  view={view}
+                  onEdit={editProject}
+                  onEditTask={editTask}
+                />
+              ))}
+            </section>
+          )}
 
-        {dashboard.inbox.length > 0 && (
-          <section className="goal">
-            <h2>Inbox</h2>
-            <TaskList tasks={dashboard.inbox} onEdit={editTask} />
-          </section>
-        )}
+          {dashboard.inbox.length > 0 && (
+            <section className="goal">
+              <h2>Inbox</h2>
+              <TaskList tasks={dashboard.inbox} onEdit={editTask} />
+            </section>
+          )}
+        </div>
 
         <ArchivedSection archived={dashboard.archived} />
 

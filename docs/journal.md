@@ -2,6 +2,23 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Milestone 3: focus sections
+
+- Owner confirmed A6–A9; new assumptions A10–A12 (7-day windows, subtasks included, due today = upcoming).
+- `computeFocus` (src/domain/focus.ts) builds Overdue, Upcoming, Blocked and Recently completed;
+  `getDashboard` feeds it only visible work, with a context path for each task.
+- Focus panel added; the same task now appears twice on screen (panel + tree), so the tree became
+  a named region and e2e selectors were scoped to it before they could break.
+- First screenshot showed cramped cards (titles wrapping, Cancel overflowing): focus rows made compact.
+- Code review: 6 findings, all fixed — stale sections after midnight (reload on focus and at
+  midnight), two-call save in the edit dialog (status now saved with the other fields), hard-coded
+  "7 days" labels, rolling-hours window for Recently completed (now calendar days), midnight-sensitive
+  e2e test, M3 tests in the wrong file.
+- An outage of the session's automatic safety check blocked file edits mid-way; work resumed later
+  from the exact point it stopped (nothing was lost because nothing had been committed half-done).
+- Results: `npm run verify` passed (102 tests); `npm run test:e2e` passed (3 tests).
+- Not covered by automated tests: the midnight reload timer (checked by reading the code).
+
 ## 2026-10-25 — Milestone 2: edit, archive, cancel, postpone, subtasks
 
 - Criteria CA-2.1 to CA-2.10 and assumptions A6–A9 written before coding. A9 was widened during

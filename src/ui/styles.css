@@ -308,3 +308,47 @@ button.link.danger {
   border-radius: 6px;
   padding: 8px 12px;
 }
+
+/* ---- milestone 3: focus panel ---- */
+
+.focus {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+.focus-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 12px 16px;
+}
+.focus-list.danger {
+  border-color: #fecdca;
+}
+.focus-list h2 {
+  font-size: 15px;
+}
+.focus-list .count {
+  color: var(--muted);
+  font-weight: 400;
+}
+.focus-list.danger .when {
+  color: var(--error);
+}
+.when {
+  font-size: 13px;
+}
+.context {
+  margin: 0 0 4px 26px;
+  font-size: 12px;
+}
+
+/* Long titles and actions wrap inside their card instead of overflowing. */
+.task-row {
+  flex-wrap: wrap;
+  row-gap: 2px;
+}
+.task-title {
+  min-width: 0;
+}

@@ -5,7 +5,7 @@
 // temporary data folder so the real database is never touched.
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
-import { createDataDir, launch as launchIn, quickAdd } from './helpers';
+import { createDataDir, launch as launchIn, quickAdd, tree } from './helpers';
 
 let data: ReturnType<typeof createDataDir>;
 const launch = () => launchIn(data.path);
@@ -49,12 +49,12 @@ describe('milestone 1 vertical slice in the real app', () => {
       // click(), not check(): the checkbox only shows the state the main
       // process has saved, so it changes after the round trip, not instantly
       // (see docs/learning-guide.md, chapter 8).
-      await page
+      await tree(page)
         .getByRole('checkbox', { name: 'Review the main concepts' })
         .click();
       await page.getByText('1 of 1 task done').waitFor();
       expect(
-        await page
+        await tree(page)
           .getByRole('checkbox', { name: 'Review the main concepts' })
           .isChecked(),
       ).toBe(true);
@@ -68,7 +68,7 @@ describe('milestone 1 vertical slice in the real app', () => {
     try {
       await page.getByText('1 of 1 task done').waitFor();
       expect(
-        await page
+        await tree(page)
           .getByRole('checkbox', { name: 'Review the main concepts' })
           .isChecked(),
       ).toBe(true);

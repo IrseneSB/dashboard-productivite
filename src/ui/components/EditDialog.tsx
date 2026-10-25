@@ -13,6 +13,8 @@ import {
 import type { Result } from '../../shared/api';
 import { projectOptions } from '../projectOptions';
 
+const EDITABLE_STATUSES: readonly string[] = ['todo', 'in_progress', 'blocked'];
+
 export type Editing =
   | { kind: 'goal'; item: Goal }
   | { kind: 'project'; item: Project }
@@ -36,6 +38,11 @@ export function EditDialog({ editing, dashboard, onClose, onSaved }: Props) {
   );
   const [date, setDate] = useState(
     (kind === 'task' ? editing.item.dueDate : editing.item.targetDate) ?? '',
+  );
+  // Only open statuses are offered here; done and cancelled have their own
+  // buttons (checkbox, Cancel, Reopen) with their own rules.
+  const [status, setStatus] = useState(
+    kind === 'task' ? editing.item.status : 'todo',
   );
   const [priority, setPriority] = useState(
     kind === 'task' ? editing.item.priority : 'medium',
@@ -77,6 +84,9 @@ export function EditDialog({ editing, dashboard, onClose, onSaved }: Props) {
         dueDate: date || null,
         // A subtask follows its parent; sending its project would be refused.
         ...(isSubtask ? {} : { projectId: parentId || null }),
+        // One call: every field, status included, is saved together or not
+        // at all (code review, M3).
+        ...(status !== editing.item.status ? { status } : {}),
       });
     }
     if (!result.ok) {
@@ -135,6 +145,20 @@ export function EditDialog({ editing, dashboard, onClose, onSaved }: Props) {
             onChange={(e) => setDate(e.target.value)}
           />
         </label>
+
+        {kind === 'task' && EDITABLE_STATUSES.includes(editing.item.status) && (
+          <label>
+            Status
+            <select
+              value={status}
+              onChange={(e) => setStatus(e.target.value as typeof status)}
+            >
+              <option value="todo">To do</option>
+              <option value="in_progress">In progress</option>
+              <option value="blocked">Blocked</option>
+            </select>
+          </label>
+        )}
 
         {kind === 'task' && (
           <label>

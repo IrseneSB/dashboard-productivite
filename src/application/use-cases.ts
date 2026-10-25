@@ -17,8 +17,13 @@ import {
   PROJECT_STATUSES,
   TASK_STATUSES,
 } from '../domain/model';
+import {
+  computeFocus,
+  type FocusItem,
+  type FocusSections,
+} from '../domain/focus';
 import { computeProgress, type Progress } from '../domain/progress';
-import { transitionTask } from '../domain/task-status';
+import { isOpen, isOpenStatus, transitionTask } from '../domain/task-status';
 import {
   ValidationError,
   requireObject,
@@ -71,7 +76,13 @@ export type UpdateTaskInput = Partial<
     CreateTaskInput,
     'projectId' | 'title' | 'notes' | 'priority' | 'dueDate'
   >
->;
+> & {
+  /**
+   * Only between open statuses (todo, in_progress, blocked). Done and cancelled
+   * go through setTaskStatus, which applies the subtask rules.
+   */
+  status?: string;
+};
 
 export interface TaskView {
   task: Task;
@@ -101,12 +112,9 @@ export interface DashboardView {
   inbox: TaskView[];
   /** Archived items, listed so they can be restored. */
   archived: { goals: Goal[]; projects: Project[] };
+  /** Overdue, upcoming, blocked and recently completed work (milestone 3). */
+  focus: FocusSections;
 }
-
-/** Open = work still to do. Done and cancelled tasks are closed. */
-const isOpenStatus = (status: TaskStatus) =>
-  status !== 'done' && status !== 'cancelled';
-const isOpen = (task: Task) => isOpenStatus(task.status);
 
 export function createUseCases({ store, now, newId }: Dependencies) {
   const timestamp = () => now().toISOString();
@@ -163,6 +171,30 @@ export function createUseCases({ store, now, newId }: Dependencies) {
   }
 
   const subtasksOf = (taskId: Id): Task[] => store.listSubtasks(taskId);
+
+  /** Status change allowed by the edit form: between open statuses only. */
+  function validateOpenStatusChange(task: Task, raw: unknown): TaskStatus {
+    if (raw === undefined || raw === task.status) return task.status;
+    if (
+      typeof raw !== 'string' ||
+      !isOpenStatus(raw as TaskStatus) ||
+      !(TASK_STATUSES as readonly string[]).includes(raw)
+    ) {
+      throw new ValidationError(
+        'status',
+        'Here a task can only be set to to do, in progress or blocked.',
+      );
+    }
+    if (!isOpen(task)) {
+      throw new ValidationError(
+        'status',
+        `This task is ${task.status}. Reopen it first.`,
+      );
+    }
+    // canTransition allows every move between open statuses; checked anyway
+    // so this path can never bypass the lifecycle table.
+    return transitionTask(task, raw as TaskStatus, task.updatedAt).status;
+  }
 
   // ---- goals
 
@@ -374,6 +406,7 @@ export function createUseCases({ store, now, newId }: Dependencies) {
         input.dueDate === undefined
           ? task.dueDate
           : validateOptionalDate(input.dueDate, 'dueDate'),
+      status: validateOpenStatusChange(task, input.status),
       updatedAt: at,
     };
 
@@ -523,12 +556,39 @@ export function createUseCases({ store, now, newId }: Dependencies) {
         };
       });
 
+    const standaloneProjects = visibleProjects
+      .filter((p) => p.goalId === null)
+      .map(toProjectView);
+    const inbox = (topLevelByProject.get(null) ?? []).map(toTaskView);
+
+    // Focus sections only see what the dashboard shows: anything inside an
+    // archived goal or project is left out (assumption A11).
+    const focusItems: FocusItem[] = [];
+    const collect = (views: TaskView[], context: string[]) => {
+      for (const view of views) {
+        focusItems.push({ task: view.task, context });
+        for (const subtask of view.subtasks) {
+          focusItems.push({
+            task: subtask,
+            context: [...context, view.task.title],
+          });
+        }
+      }
+    };
+    for (const { goal, projects } of goals) {
+      for (const view of projects)
+        collect(view.tasks, [goal.title, view.project.title]);
+    }
+    for (const view of standaloneProjects)
+      collect(view.tasks, [view.project.title]);
+    collect(inbox, []);
+    const current = now();
+
     return {
       goals,
-      standaloneProjects: visibleProjects
-        .filter((p) => p.goalId === null)
-        .map(toProjectView),
-      inbox: (topLevelByProject.get(null) ?? []).map(toTaskView),
+      standaloneProjects,
+      inbox,
+      focus: computeFocus(focusItems, localIsoDate(current)),
       archived: {
         goals: allGoals.filter((g) => g.status === 'archived'),
         projects: allProjects.filter((p) => p.status === 'archived'),

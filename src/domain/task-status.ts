@@ -15,6 +15,12 @@ const ALLOWED: Record<TaskStatus, readonly TaskStatus[]> = {
   cancelled: ['todo'],
 };
 
+/** Open = work still to do. Done and cancelled tasks are closed. */
+export const isOpenStatus = (status: TaskStatus): boolean =>
+  status !== 'done' && status !== 'cancelled';
+export const isOpen = (task: Pick<Task, 'status'>): boolean =>
+  isOpenStatus(task.status);
+
 export function canTransition(from: TaskStatus, to: TaskStatus): boolean {
   return ALLOWED[from].includes(to);
 }

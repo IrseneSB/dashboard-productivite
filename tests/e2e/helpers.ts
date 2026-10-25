@@ -49,3 +49,10 @@ export async function quickAdd(
   }
   await page.getByRole('button', { name: 'Add', exact: true }).click();
 }
+
+/**
+ * The goals → projects → tasks tree. Since milestone 3 the same task can also
+ * appear in the Focus panel, so task controls are looked up inside the tree.
+ */
+export const tree = (page: Page) =>
+  page.getByRole('region', { name: 'Goals and projects' });
