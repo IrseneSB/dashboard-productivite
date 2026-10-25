@@ -1,0 +1,27 @@
+# Runs on every push and pull request: the same checks as `npm run verify`
+# and the end-to-end tests, on Windows, the platform the app targets.
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: windows-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Type check, lint, unit and integration tests
+        run: npm run verify
+      - name: End-to-end tests (packaged app driven by Playwright)
+        run: npm run test:e2e

@@ -45,6 +45,38 @@ behavior, malformed input). The cost was one review pass per milestone, not per 
 | Interruption          | A tool outage stopped the session mid-change; the state was reported honestly (what was applied, what was not, untested) and resumed later | `journal.md`                    |
 | Owner involvement     | The owner asked to stop waiting for milestone confirmations; publication still requires explicit approval                                  | —                               |
 
+## Milestones 4–6
+
+| Aspect                 | Observation                                                                                                                                                                                           |
+| ---------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Autonomy               | After milestone 3 the owner asked not to wait for confirmation between milestones; milestones 4–6 ran end to end, and only publication was kept as an approval point                                  |
+| Reviewer               | Found issues again at milestones 4 (4 findings) and 5 (4 findings), including two that only appear in real use (Task Manager disabling the login item, a double click completing the next suggestion) |
+| Reading the docs first | Electron's documentation was read before writing the login-item code; the Squirrel launcher path it describes was then confirmed on the real install                                                  |
+| Limits of automation   | The installed app cannot be driven by Playwright (fuses), and start at login needs a reboot: these were left as manual checks and labelled as not verified instead of being claimed                   |
+
+## What this pilot teaches about the larger AI-agent system
+
+1. **One main agent was enough to build the app.** Requirements, code, tests and documentation
+   were done by a single session. No milestone needed specialist agents running in parallel.
+2. **The independent reviewer was worth its cost every time.** All tests were green before each
+   review, and each review still found 4 to 10 real issues. Tests check what was specified; the
+   reviewer asks what could go wrong for the user.
+3. **Deterministic checks did most of the verification.** Type checking, lint, 132 unit and
+   integration tests and 5 end-to-end tests ran dozens of times at no model cost.
+4. **Looking at the real result matters.** Screenshots from the end-to-end tests revealed a layout
+   problem no assertion covered (milestone 3).
+5. **Writing assumptions down works.** Twelve assumptions were recorded, confirmed or adjusted,
+   and none was silently turned into a requirement.
+6. **Some things need a human.** Approving a public repository, choosing a license, and checking
+   behavior that needs a reboot remained with the owner, as designed.
+7. **Interruptions must leave an honest state.** When the session's safety check stopped
+   responding mid-change, the report listed exactly what was applied, what was not, and what was
+   untested; work resumed from that point without loss.
+
+**Recommendation for the agent system:** keep the minimal setup validated here: one main agent,
+deterministic checks, an independent review per milestone, written assumptions, and explicit
+human approval points. Add specialist agents only when a measured problem calls for one.
+
 ## Still to evaluate
 
 - Whether requirements stay traced as features are added (M3–M6).

@@ -2,6 +2,17 @@
 
 Newest first. One entry per significant change, decision revision, or failure.
 
+## 2026-10-25 — Milestone 6: packaging and release preparation
+
+- Makers limited to Windows (Squirrel installer + ZIP); Linux makers uninstalled. ADR-008.
+- `npm run make` succeeded even though npm 11 had skipped electron-winstaller's install script
+  (noted at milestone 1): the open question is closed.
+- Installed the Setup.exe on the development machine: per-user install, launcher one folder above
+  `app-0.1.0`, window opened. Start at login on the installed app is **not verified yet**: it
+  changes the owner's login items and needs a reboot, so it is left to the owner.
+- Added CI (Windows, Node 24, verify + e2e), issue templates, CHANGELOG, chapters 9–12.
+- Publication on GitHub waits for the owner's approval and license choice.
+
 ## 2026-10-25 — Milestone 5: start at login and export
 
 - Read Electron's documentation before coding: for a Squirrel install, register the launcher one

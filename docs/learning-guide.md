@@ -3,8 +3,8 @@
 How this application was built, decision by decision. It describes the **actual** code in this
 repository and is updated at every milestone.
 
-**State of this guide:** updated at the end of **milestone 5** (start at login, export). Chapters marked
-_planned_ describe work that has not been done yet.
+**State of this guide:** updated at the end of **milestone 6** (packaging, release preparation).
+All twelve chapters describe work that exists in this repository.
 
 ---
 
@@ -199,7 +199,7 @@ tests/
   e2e/             the packaged app driven by Playwright (helpers.ts shared)
 docs/
   requirements.md, learning-guide.md, journal.md, process-evaluation.md
-  decisions/       ADR-001 … ADR-007
+  decisions/       ADR-001 … ADR-008
 forge.config.mts   how Electron Forge builds and packages the app
 vite.*.config.mts  one bundler configuration per process (main, preload, renderer)
 vitest*.config.mts unit/integration tests, and end-to-end tests
@@ -531,15 +531,147 @@ launch of the installed app, a banner asks once.
 "Export my data…" asks where to save, writes the JSON to `<name>.tmp`, then renames it. If the
 write fails, the temporary file is removed. A half-written file never carries the final name.
 
-### Packaging (_milestone 6, planned_)
+### Packaging (milestone 6, [ADR-008](decisions/ADR-008-packaging.md))
 
-So far `electron-forge package` builds the app (used by the end-to-end tests). Not yet done: the
-Windows installer and its verification.
+| Command           | Produces                                                                 | Used for         |
+| ----------------- | ------------------------------------------------------------------------ | ---------------- |
+| `npm start`       | Runs from source with a Vite dev server and live reload                  | Development      |
+| `npm run package` | `out/Productivity Dashboard-win32-x64/`: the app, not installed          | End-to-end tests |
+| `npm run make`    | `out/make/squirrel.windows/x64/ProductivityDashboardSetup.exe` and a ZIP | Installing       |
 
-## Chapter 10 — GitHub and professional workflow (_planned, milestone 6_)
+**What Squirrel installs.** Running the Setup.exe installs into
+`%LOCALAPPDATA%\productivity_dashboard\`, without admin rights:
 
-The repository is local with Git. Publication will happen only after explicit approval.
+```
+Update.exe                    the updater, also used to uninstall
+app-0.1.0\                    this version of the app
+productivity-dashboard.exe    a small launcher that always starts the newest version
+```
 
-## Chapter 11 — Maintenance and future development (_planned_)
+The login item points to the launcher, not to `app-0.1.0\…`, so it still works after an update.
+The launcher's location was checked on the real install on 2026-10-25.
 
-## Chapter 12 — What to learn next (_planned_)
+**Development vs packaged app.**
+
+|                  | `npm start`                        | Installed app                   |
+| ---------------- | ---------------------------------- | ------------------------------- |
+| `app.isPackaged` | `false`                            | `true`                          |
+| UI loaded from   | Vite dev server (live reload)      | Files inside the `asar` archive |
+| Data folder      | `%APPDATA%\Productivity Dashboard` | the same folder                 |
+| Start at login   | Disabled, with the reason          | Available                       |
+| Node inspector   | Available                          | Disabled by Electron fuses      |
+
+Both use the **same data folder**: running `npm start` works on your real data. The end-to-end
+tests never do, because they point the app at a temporary folder.
+
+**Size.** The installer is about 148 MB, mostly Chromium and Node.js bundled by Electron. This
+was the accepted cost of Electron (ADR-001).
+
+## Chapter 10 — GitHub and professional workflow
+
+### Repository organization
+
+`src/` (code), `tests/` (all tests), `docs/` (this guide, requirements, decisions, log),
+`.github/` (CI workflow, issue templates), `CHANGELOG.md`, `README.md`. Generated folders
+(`node_modules/`, `.vite/`, `out/`), databases and test screenshots are in `.gitignore`.
+
+### The workflow used in this project (solo)
+
+```bash
+git switch -c feature/weekly-review      # one branch per feature
+npm run verify                           # before every commit
+git add -A && git commit -m "feat: weekly review summary"
+npm run test:e2e                         # before merging
+git switch main && git merge --no-ff feature/weekly-review
+```
+
+Commit messages follow the "type: summary" convention (`feat`, `fix`, `docs`, `test`, `chore`).
+Each milestone of this project is one commit on `main`, together with the tests that prove it.
+
+**Reviewing a change.** Read the diff (`git diff main...feature/x`), check that each changed
+behavior has a test, run `npm run verify` and `npm run test:e2e`, and check that the docs still
+describe the code. In this project an independent review pass was done at the end of every
+milestone, and it found real issues every time (chapter 8, `process-evaluation.md`).
+
+**With several contributors.** Protect `main` on GitHub (pull requests required, CI green before
+merge), one pull request per feature, and a review by someone other than the author. The CI
+workflow in `.github/workflows/ci.yml` already runs the checks on every pull request.
+
+### Preparing a release
+
+1. Update `version` in `package.json` and add a section to `CHANGELOG.md`.
+2. `npm run verify` and `npm run test:e2e`.
+3. `npm run make`, install the Setup.exe, check that the app starts and the data is there.
+4. Tag (`git tag v0.1.0`, `git push --tags`), then create a GitHub release with the Setup.exe.
+
+### Reporting and tracking bugs
+
+GitHub Issues, with the templates in `.github/ISSUE_TEMPLATE/`. A bug report asks for the steps,
+the app and Windows versions, and reminds not to attach the database (personal data).
+
+## Chapter 11 — Maintenance and future development
+
+### Adding a feature without breaking the rest: a worked example
+
+**Feature:** recurring tasks ("review flashcards every Monday").
+
+1. **Requirements.** Add `CA-7.x` criteria to `requirements.md`: what repeats (tasks only, or
+   subtasks too?), when the next occurrence is created (when the current one is done?), what
+   happens to an overdue occurrence. Write assumptions for anything not decided.
+2. **Data.** Migration 4: a `recurrence` column on `tasks` (e.g. `weekly:1`), `NULL` for ordinary
+   tasks. Never edit migrations 1–3. Add a test that upgrades a version 3 database.
+3. **Domain.** A pure function `nextOccurrence(task, today)` in `src/domain/`, with unit tests for
+   month ends, leap years and daylight-saving weeks.
+4. **Use case.** In `setTaskStatus`, when a recurring task becomes done, create the next one in
+   the same transaction.
+5. **UI.** A field in the edit dialog and a small "repeats weekly" badge.
+6. **What to recheck.** Progress (does each occurrence count?), the Focus panel and the suggestion
+   (only the current occurrence should appear), the export (new field), and every existing
+   end-to-end test.
+
+### Investigating a bug report
+
+Reproduce it first, ideally as a failing test. Then find the cause, fix it, and keep the test: it
+becomes a regression test. Record the event in `journal.md` if it teaches something.
+
+### Updating dependencies safely
+
+`npm outdated` lists them. Update one group at a time (Electron alone, React alone), read the
+release notes, run `npm run verify` and `npm run test:e2e`, then `npm run make` and install.
+An Electron update can change the bundled Node.js: ADR-002 depends on `node:sqlite` being there.
+
+### Database changes
+
+A new migration, a test that upgrades a database from the previous version, and the export's
+`schemaVersion` bumped if the exported shape changes.
+
+### Recovering from a bad release
+
+The data lives in `%APPDATA%\Productivity Dashboard\dashboard.db` and is not removed by
+uninstalling. Export first, then reinstall the previous Setup.exe. A database written by a newer
+version is refused rather than misread (`migrate()` checks the version).
+
+### Technical debt to prioritize
+
+1. **Import** of an export file: a backup is only half useful without a restore.
+2. **An automated check that `src/domain` imports nothing** (today only a convention).
+3. **Code signing**, if the app is shared with other people.
+4. Task rows in the Focus panel and in the tree share `TaskRow` but differ through a `compact`
+   flag; if they diverge further, split them.
+
+## Chapter 12 — What to learn next
+
+**Now (you used it in this project):**
+
+1. TypeScript types and narrowing: `Result` unions, `Partial`, `satisfies`.
+2. SQL constraints, foreign keys, transactions and migrations (SQLite).
+3. The testing pyramid: pure unit tests, contract tests, end-to-end tests with Playwright.
+4. Electron's process model and security: `contextIsolation`, preload, IPC.
+5. React state, effects and context (`useAction`).
+
+**Later:**
+
+- Accessibility testing (keyboard navigation, screen readers).
+- Code signing and auto-update for desktop apps.
+- Observability (structured logs, crash reports) once other people use the app.
+- Synchronization and conflict resolution, if the app ever goes multi-device.

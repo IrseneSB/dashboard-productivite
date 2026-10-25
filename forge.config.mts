@@ -1,8 +1,6 @@
 import type { ForgeConfig } from '@electron-forge/shared-types';
 import { MakerSquirrel } from '@electron-forge/maker-squirrel';
 import { MakerZIP } from '@electron-forge/maker-zip';
-import { MakerDeb } from '@electron-forge/maker-deb';
-import { MakerRpm } from '@electron-forge/maker-rpm';
 import { VitePlugin } from '@electron-forge/plugin-vite';
 import { FusesPlugin } from '@electron-forge/plugin-fuses';
 import { FuseV1Options, FuseVersion } from '@electron/fuses';
@@ -10,13 +8,20 @@ import { FuseV1Options, FuseVersion } from '@electron/fuses';
 const config: ForgeConfig = {
   packagerConfig: {
     asar: true,
+    // Name of the .exe and of the folder in %LOCALAPPDATA% (ADR-008).
+    executableName: 'productivity-dashboard',
   },
   rebuildConfig: {},
+  // Windows only (the target platform of this project, ADR-001):
+  // - Squirrel: a Setup.exe that installs per user, without admin rights,
+  //   and creates Start menu and desktop shortcuts;
+  // - ZIP: the same app without installer, for a quick manual test.
   makers: [
-    new MakerSquirrel({}),
-    new MakerZIP({}, ['darwin']),
-    new MakerRpm({}),
-    new MakerDeb({}),
+    new MakerSquirrel({
+      name: 'productivity_dashboard',
+      setupExe: 'ProductivityDashboardSetup.exe',
+    }),
+    new MakerZIP({}, ['win32']),
   ],
   plugins: [
     new VitePlugin({
